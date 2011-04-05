@@ -1,0 +1,114 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>Tetravex</title>
+<!-- Ⲧⲉϯⲅⲁⲩⲉⲭ -->
+<link rel="stylesheet" type="text/css" href="dojo-release-1.6.0/dijit/themes/tundra/tundra.css" />
+<link rel="stylesheet" type="text/css" href="dojo-release-1.6.0/dojo/resources/dojo.css" />
+<link rel="stylesheet" type="text/css" href="dojo-release-1.6.0/dojo/resources/dnd.css" />
+<script type="text/javascript" src="dojo-release-1.6.0/dojo/dojo.js">
+  
+</script>
+<script type="text/javascript">
+  dojo.require("dojox.gfx");
+  dojo.require("dojox.gfx.move");
+
+  var container = null, surface = null;
+  var params = {
+    suface_width : 400,
+    suface_height : 200,
+    tile_width : 40,
+    tile_height : 40
+  };
+
+  function initSurface() {
+    rectangle = surface.createRect(
+        {
+          x : 0, //what are you - offset, do I need you?
+          y : 0,
+          width : params.tile_width,
+          height : params.tile_height,
+          r : 3
+        }).setFill(
+        "red").setStroke(
+        "blue");
+
+    //override onMoving on your object and modify the "shift" object
+    //so it never moves a shape outside of a specified boundaries.
+    //from here http://dojo-toolkit.33424.n3.nabble.com/gfx-constrainedMoveable-td176539.html
+    dojo.extend(
+        dojox.gfx.Moveable, {
+          onMoving : function(mover, shift) {
+            //console.log("clear");
+            //console.clear(); //this doesn't work in IE, is there a dojo version???????
+            //console.log("dx = " + shift.dx + " dy = " + shift.dy);
+            if (mover.shape.matrix) {
+              //console.log("mover shape matrix dx " + mover.shape.matrix.dx);
+              // don't go over the left edge
+              if (shift.dx > 0 && mover.shape.matrix.dx > (params.suface_width - params.tile_width - 2)) {
+                shift.dx = 0;
+              }
+              // don't go over the right edge
+              if (shift.dx < 0 && mover.shape.matrix.dx < 2) {
+                shift.dx = 0;
+              }
+              // don't go ovet the top
+              if (shift.dy < 0 && mover.shape.matrix.dy < 2) {
+                shift.dy = 0;
+              }
+              // don't go ovet the bottom.
+              if (shift.dy > 0 && mover.shape.matrix.dy > (params.suface_height - params.tile_height - 2)) {
+                shift.dy = 0;
+              }
+            }
+          }
+        });
+
+    // tiles may only rest on a square.
+    dojo.subscribe(
+        "/gfx/move/stop", this, function moveToNearestSquare(mover) {
+          this.mover = mover;
+
+          var moveTo = function findNearestSquare(mover) {
+            return {
+              x : 22,
+              y : 33
+            };
+          };
+
+          var currentX = mover.shape.matrix.dx;
+          var currentY = mover.shape.matrix.dy;
+
+          var destinationX = 100;
+          var destinationY = 30;
+
+          var deltaX = destinationX - currentX;
+          var deltaY = destinationY - currentY;
+
+          // aim minus current
+          mover.shape.applyLeftTransform({
+            dx : deltaX,
+            dy : deltaY
+          })
+
+        });
+
+    moveMe = new dojox.gfx.Moveable(
+        rectangle);
+
+  }
+
+  function initGfx() {
+    container = dojo.byId("gfx_holder");
+    surface = dojox.gfx.createSurface(
+        container, params.suface_width, params.suface_height);
+    surface.whenLoaded(initSurface);
+  }
+
+  dojo.addOnLoad(initGfx);
+</script>
+</head>
+<body>
+  <div id="gfx_holder" style="width: 400px; height: 200px; background-color: #E1EFBB;"></div>
+</body>
+</html>

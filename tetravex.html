@@ -21,7 +21,12 @@
     tile_height : 40
   };
 
+  // even simpler, and easier to programatically create?
+  var boardX = [ 20, 70, 120, 210, 260, 310 ];
+  var boardY = [ 20, 70, 120 ];
+
   function initSurface() {
+    drawBoard();
     rectangle = surface.createRect(
         {
           x : 0, //what are you - offset, do I need you?
@@ -39,25 +44,15 @@
     dojo.extend(
         dojox.gfx.Moveable, {
           onMoving : function(mover, shift) {
-            //console.log("clear");
-            //console.clear(); //this doesn't work in IE, is there a dojo version???????
-            //console.log("dx = " + shift.dx + " dy = " + shift.dy);
             if (mover.shape.matrix) {
-              //console.log("mover shape matrix dx " + mover.shape.matrix.dx);
-              // don't go over the left edge
-              if (shift.dx > 0 && mover.shape.matrix.dx > (params.suface_width - params.tile_width - 2)) {
+              // don't go over the left or right edges - optimize by choosing on x value, 2 is the border??
+              if ((shift.dx > 0 && mover.shape.matrix.dx > (params.suface_width - params.tile_width - 2))
+                  || (shift.dx < 0 && mover.shape.matrix.dx < 2)) {
                 shift.dx = 0;
               }
-              // don't go over the right edge
-              if (shift.dx < 0 && mover.shape.matrix.dx < 2) {
-                shift.dx = 0;
-              }
-              // don't go ovet the top
-              if (shift.dy < 0 && mover.shape.matrix.dy < 2) {
-                shift.dy = 0;
-              }
-              // don't go ovet the bottom.
-              if (shift.dy > 0 && mover.shape.matrix.dy > (params.suface_height - params.tile_height - 2)) {
+              // don't go ovet the top or bottom
+              if ((shift.dy < 0 && mover.shape.matrix.dy < 2)
+                  || (shift.dy > 0 && mover.shape.matrix.dy > (params.suface_height - params.tile_height - 2))) {
                 shift.dy = 0;
               }
             }
@@ -69,23 +64,42 @@
         "/gfx/move/stop", this, function moveToNearestSquare(mover) {
           this.mover = mover;
 
-          var moveTo = function findNearestSquare(mover) {
-            return {
-              x : 22,
-              y : 33
-            };
-          };
+          // need to take into account the middle of the tile, maybe.
+          // will also need to call the check if tile is allowed function and return to origin if not.
+          function findNearestX(x) {
+            console.log("X is " + x);
 
-          var currentX = mover.shape.matrix.dx;
-          var currentY = mover.shape.matrix.dy;
+            var i = 0;
+            // less than the first one
+            if (x < boardX[i]) {
+              return boardX[i];
+            }
+            // inbetween the middles - do it on the top corner for now
+            // this will need some optimising
+            for (i = 1; i <= 4; i++) {
+              if (x > boardX[i] && x < boardX[i + 1]) {
+                return boardX[i];
+              }
+            }
+            // or greater than the last.
+            if (x > boardX[5]) {
+              return boardX[5];
+            }
 
-          var destinationX = 100;
-          var destinationY = 30;
+            // shouldn't get here.
+            return 1;
+          }
+          ;
 
-          var deltaX = destinationX - currentX;
-          var deltaY = destinationY - currentY;
+          function findNearestY(y) {
+            console.log("X is " + y);
+            return 30;
+          }
+          ;
 
-          // aim minus current
+          var deltaX = findNearestX(mover.shape.matrix.dx) - mover.shape.matrix.dx;
+          var deltaY = findNearestY(mover.shape.matrix.dy) - mover.shape.matrix.dy;
+
           mover.shape.applyLeftTransform({
             dx : deltaX,
             dy : deltaY
@@ -103,6 +117,10 @@
     surface = dojox.gfx.createSurface(
         container, params.suface_width, params.suface_height);
     surface.whenLoaded(initSurface);
+  }
+  
+  function drawBoard(){
+    console.log("draw board");
   }
 
   dojo.addOnLoad(initGfx);

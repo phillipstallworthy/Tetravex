@@ -1,1 +1,207 @@
-/home/ps1173/work/dojoworkspace/dojo/WebContent/tetravex.html
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>Tetravex</title>
+<!-- Ⲧⲉϯⲅⲁⲩⲉⲭ -->
+<link rel="stylesheet" type="text/css" href="dojo-release-1.6.0/dijit/themes/tundra/tundra.css" />
+<link rel="stylesheet" type="text/css" href="dojo-release-1.6.0/dojo/resources/dojo.css" />
+<link rel="stylesheet" type="text/css" href="dojo-release-1.6.0/dojo/resources/dnd.css" />
+<script type="text/javascript" src="dojo-release-1.6.0/dojo/dojo.js">
+  
+</script>
+<script type="text/javascript">
+  dojo.require("dojox.gfx");
+  dojo.require("dojox.gfx.move");
+
+  var container = null, surface = null;
+  var suface_width = 420;
+  var suface_height = 200;
+  var tile_size = 40; // keep me even.
+  var startX = 20;
+  var startY = 20;
+  var pad = 10;
+  var half_tile = (tile_size / 2) + (pad / 2); //convienence for calculating where to drop tile.
+  var plus_gap = 0;
+  var minus_gap = 0;
+
+  // 3x3 board - need to create these arrays dymanically for different size playing boards
+  // is the top left co-ordinated of the sqaures that make up the two boards
+  var boardX = [ startX, startX + tile_size + pad, startX + ((tile_size + pad) * 2), startX + ((tile_size + pad) * 3),
+      startX + ((tile_size + pad) * 4), startX + ((tile_size + pad) * 5), startX + ((tile_size + pad) * 6),
+      startX + ((tile_size + pad) * 7) ];
+  var boardY = [ startY, startY + tile_size + pad, startY + ((tile_size + pad) * 2), startY + ((tile_size + pad) * 3) ];
+
+  function drawBoard() {
+    // summary: Use the global boardX and boardY arrays to draw the board grid lines.
+    console.log("draw board");
+    var path = surface.createPath().setStroke(
+        "black");
+
+    // left board horizontal lines
+    var i;
+    for (i = 0; i < 4; i++) {
+      path.moveTo(
+          boardX[0], boardY[i]).hLineTo(
+          boardX[3]).closePath();
+    }
+
+    // left board vertical lines
+    for (i = 0; i < 4; i++) {
+      path.moveTo(
+          boardX[i], boardY[0]).vLineTo(
+          boardY[3]).closePath();
+    }
+
+    // right board horizontal lines
+    for (i = 0; i < 4; i++) {
+      path.moveTo(
+          boardX[4], boardY[i]).hLineTo(
+          boardX[7]).closePath();
+    }
+    // right board vertical lines
+    for (i = 4; i < 8; i++) {
+      path.moveTo(
+          boardX[i], boardY[0]).vLineTo(
+          boardY[3]).closePath();
+    }
+  }
+
+  function initSurface() {
+    // summary: draw the board, make the tiles
+    drawBoard();
+    rectangle = surface.createRect(
+        {
+          x : 0, //what are you - offset, do I need you?
+          y : 0,
+          width : tile_size,
+          height : tile_size,
+          r : 3
+        }).setFill(
+        "red").setStroke(
+        "blue");
+
+    //override onMoving on your object and modify the "shift" object
+    //so it never moves a shape outside of a specified boundaries.
+    //from here http://dojo-toolkit.33424.n3.nabble.com/gfx-constrainedMoveable-td176539.html
+    dojo.extend(
+        dojox.gfx.Moveable, {
+          onMoving : function(mover, shift) {
+            if (mover.shape.matrix) {
+              // don't go over the left or right edges - optimize by choosing on x value, 2 is the border??
+              if ((shift.dx > 0 && mover.shape.matrix.dx > (suface_width - tile_size - 2))
+                  || (shift.dx < 0 && mover.shape.matrix.dx < 2)) {
+                shift.dx = 0;
+              }
+              // don't go ovet the top or bottom
+              if ((shift.dy < 0 && mover.shape.matrix.dy < 2)
+                  || (shift.dy > 0 && mover.shape.matrix.dy > (suface_height - tile_size - 2))) {
+                shift.dy = 0;
+              }
+            }
+          }
+        });
+
+    // make the tile movable.
+    moveMe = new dojox.gfx.Moveable(
+        rectangle);
+
+    // subscribe to the global moving object stop event. Any time a tile
+    // stops moving this is called.
+    dojo.subscribe(
+        "/gfx/move/stop", this, function moveToNearestSquare(mover) {
+
+          // During game play will also need to call the check if tile is allowed to be dropped
+          // based on tile numbers
+          function findNearestX(tileX) {
+            // summary: Examine all the possible x co-ord board values that 
+            // the tile may be dropped on and return the nearest.
+            // tileX: the x co-od of the top left corner of the tile
+
+            // Quickly find if the tile is in a posistion less than 
+            // half way through the first square 
+            if (tileX < boardX[0] + half_tile) {
+              return boardX[0];
+            }
+
+            var i;
+            // iterate over the middle sqaure options.
+            for (i = 1; i <= 5; i++) {
+
+              // include half the gap when looking at the sqaure after it
+              if (i == 2) {
+                plus_gap = half_tile;
+              }
+
+              // this is the gap between the boards, no tile drop allowed.
+              if (i == 3) {
+                continue;
+              }
+
+              // include half the gap when looking at the sqaure after it
+              if (i == 4) {
+                minus_gap = half_tile;
+              }
+
+              console.log("Interation " + i + " x > " + (boardX[i] - half_tile) + " x < " + (boardX[i] + half_tile));
+
+              if (tileX > (boardX[i] - half_tile - minus_gap) && tileX < (boardX[i] + half_tile + plus_gap)) {
+                console.log("returning x of " + boardX[i]);
+                return boardX[i];
+              }
+              plus_gap = minus_gap = 0;
+            }
+            // or greater than the last.
+            return boardX[6];
+          }
+          ;
+
+          function findNearestY(tileY) {
+            return 30;
+            // Quickly find if the tile is in a posistion less than 
+            // half way through the first square 
+            if (tileY < boardY[0] + half_tile) {
+              return boardY[0];
+            }
+
+            var i;
+            // iterate over the middle square options.
+            for (i = 1; i <= 1; i++) {
+              if (tileY > (boardY[i] - half_tile) && tileY < boardY[i] + half_tile) {
+                console.log("returning y of " + boardY[i]);
+                return boardY[i];
+              }
+            }
+
+            return boardY[2];
+          }
+          ;
+
+          console.clear();
+          console.log("tile X is " + mover.shape.matrix.dx + "  Y is " + mover.shape.matrix.dy);
+          
+          var deltaX = findNearestX(mover.shape.matrix.dx) - mover.shape.matrix.dx;
+          var deltaY = findNearestY(mover.shape.matrix.dy) - mover.shape.matrix.dy;
+
+          mover.shape.applyLeftTransform({
+            dx : deltaX,
+            dy : deltaY
+          })
+
+        }); // end of subscribe function
+
+  }
+
+  function initGfx() {
+    container = dojo.byId("gfx_holder");
+    surface = dojox.gfx.createSurface(
+        container, suface_width, suface_height);
+    surface.whenLoaded(initSurface);
+  }
+
+  dojo.addOnLoad(initGfx);
+</script>
+</head>
+<body>
+  <div id="gfx_holder" style="width: 400px; height: 200px; background-color: #E1EFBB;"></div>
+</body>
+</html>

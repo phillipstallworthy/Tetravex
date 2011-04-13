@@ -1,0 +1,14 @@
+Tetravex
+
+This is a clone of the Gnome Tetravex game
+Copyright © 1999-2008 Lars Rydlinge
+
+I am writing this web version an exercise in using JavaScript and Dojo, Dijits and unit testing.
+
+To install:
+Download tetravex.html and put it in a directory with 
+"dojo-release-1.6.0" which you can get from the Dojo site.
+I run it on a local webserver, but I guess it should work
+from the file system.
+
+Phill.

@@ -1,0 +1,4 @@
+To run the simple tests in TestMe.js
+
+cd Tetravex/WebContent/dojo-release-1.6.0-src/util/doh
+java -jar ../shrinksafe/js.jar runner.js dojoUrl="../../dojo/dojo.js" testUrl="/home/ps1173/work/github/Tetravex/tests/testMe.js" testModule=testMe

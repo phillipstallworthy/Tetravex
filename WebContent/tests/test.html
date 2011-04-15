@@ -1,8 +1,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
-<title>Fun with DOH!</title>
-<script type="text/javascript" src="../dojo-release-1.6.0-src/dojo/dojo.js"
+<title>Tetravex Test Suite</title>
+<script type="text/javascript"
+	src="../dojo-release-1.6.0-src/dojo/dojo.js"
 	djConfig="cacheBust:(new Date()).getTime(),modulePaths:{'games.Tetravex':'../../games/Tetravex'}">
   
 </script>
@@ -10,41 +11,53 @@
 <script type="text/javascript">
   dojo.require("doh.runner");
   dojo.require("games.Tetravex");
-  dojo.addOnLoad(function() {
-    doh.register(
-        "testgroup", [ {
-          name : "test1",
-          setUp : function() {
-            this.boardX = games.Tetravex.prototype._boardX;
-            this.tetravex = new games.Tetravex;
-          },
-          runTest : function(t) {
-            t.assertTrue(1);
-            console.log("test1");
-            var i;
-            for (i = 0; i < this.boardX.length; i++) {
-              console.log("x " + this.boardX[i]);
-            }
-            
-            console.log("nearest x to 78 " + this.tetravex._findNearestX(78));
-            
-          },
-          tearDown : function() {
-            delete this.boardX;
-          }
-        },
-        {
-          name : "test2",
-          setUp : function() {
-          },
-          runTest : function(t) {
-            t.assertTrue(1);
-          },
-          tearDown : function() {
-          }
-        }]);
-    doh.run();
-  });
+  dojo
+      .addOnLoad(function() {
+        doh
+            .register(
+                "testgroup",
+                [
+                    {
+                      name : "test1",
+                      setUp : function() {
+                        this.boardX = games.Tetravex.prototype._boardX;
+                        this.tetravex = new games.Tetravex;
+                        // Valid x's for 3x3 board 20, 70, 120, 220, 270, 320
+                        // There are 5 key boundaries that either side of the tile goes one way or the other, so 10 test datas
+                        this.testData = [ [ 45, 20 ], [ 46, 70 ],
+                            [ 95, 70 ], [ 96, 120 ], [ 175, 120 ], [ 176, 220 ], [ 245, 220 ], [ 246, 270 ],
+                            [ 295, 270 ], [ 296, 320 ]];
+                      },
+                      runTest : function(t) {
+                        t.assertTrue(1);
+                        console
+                            .log("_findNearestX test before after and in the middle of the board sqaures to see that the tiles get dropped in the right place.");
+                        var i, expected, actual;
+                        for (i = 0; i < this.testData.length; i++) {
+                          expected = this.testData[i][1];
+                          actual = games.Tetravex.prototype._findNearestX(this.testData[i][0]);
+                          console.log("######  test value : " + this.testData[i][0] + " actual returned value : " + actual + " expected value : "
+                              + expected + "  ######");
+                          doh.assertEqual(
+                              expected, actual);
+
+                        }
+                      },
+                      tearDown : function() {
+                        delete this.boardX;
+                      }
+                    }, {
+                      name : "test2",
+                      setUp : function() {
+                      },
+                      runTest : function(t) {
+                        t.assertTrue(1);
+                      },
+                      tearDown : function() {
+                      }
+                    } ]);
+        doh.run();
+      });
 </script>
 
 </head>

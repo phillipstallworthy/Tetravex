@@ -9,19 +9,19 @@ games.Tetravex = function() {
 };
 
 // properties object
+// can I just use 'this' object?
 games.Tetravex.prototype._props = {
   suface_width : 420,
   suface_height : 200,
   tile_size : 40, // keep me even.
   startX : 20,
   startY : 20,
-  pad : 10,
-  plus_pad : 0, // normally zero, used when not dropping tiles in the gap
-  minus_gap : 0
+  padding : 10
+// the total padding around the tile. IE 5 each side time 2.
 };
 
-games.Tetravex.prototype._half_tile = function() {
-  return (this._props.tile_size / 2) + (this._props.pad / 2); // convenience
+games.Tetravex.prototype._half_square = function() {
+  return (this._props.tile_size / 2) + (this._props.padding / 2); // convenience
 };
 
 // 3x3 board - need to create these arrays dynamically for different size
@@ -29,22 +29,19 @@ games.Tetravex.prototype._half_tile = function() {
 // is the top left co-ordinated of the squares that make up the two boards
 // TODO - does this need to be a function? see page 24 dtdg
 /*
- * games.Tetravex.prototype._boardX = function() { return [ this._props.startX,
- * this._props.startX + this._props.tile_size + this._props.pad,
- * this._props.startX + ((this._props.tile_size + this._props.pad) * 2),
- * this._props.startX + ((this._props.tile_size + this._props.pad) * 3),
- * this._props.startX + ((this._props.tile_sizeh + this._props.pad) * 4),
- * this._props.startX + ((this._props.tile_size + this._props.pad) * 5),
- * this._props.startX + ((this._props.tile_size + this._props.pad) * 6),
- * this._props.startX + ((this._props.tile_size + this._props.pad) * 7) ]; };
+ * games.Tetravex.prototype._boardX = function() { return [ this._props.startX, this._props.startX +
+ * this._props.tile_size + this._props.padding, this._props.startX + ((this._props.tile_size + this._props.padding) *
+ * 2), this._props.startX + ((this._props.tile_size + this._props.padding) * 3), this._props.startX +
+ * ((this._props.tile_sizeh + this._props.padding) * 4), this._props.startX + ((this._props.tile_size +
+ * this._props.padding) * 5), this._props.startX + ((this._props.tile_size + this._props.padding) * 6),
+ * this._props.startX + ((this._props.tile_size + this._props.padding) * 7) ]; };
  */
 games.Tetravex.prototype._boardX = [ 20, 70, 120, 170, 220, 270, 320, 370 ];
 
 /*
- * games.Tetravex.prototype._boardY = function() { return [ this._props.startY,
- * this._props.startY + this._props.tile_size + this._props.pad,
- * this._props.startY + ((this._props.tile_size + this._props.pad) * 2),
- * this._props.startY + ((this._props.tile_size + this._props.pad) * 3) ]; };
+ * games.Tetravex.prototype._boardY = function() { return [ this._props.startY, this._props.startY +
+ * this._props.tile_size + this._props.padding, this._props.startY + ((this._props.tile_size + this._props.padding) *
+ * 2), this._props.startY + ((this._props.tile_size + this._props.padding) * 3) ]; };
  */
 
 games.Tetravex.prototype._boardY = [ 20, 70, 120, 170 ];
@@ -59,6 +56,7 @@ games.Tetravex.prototype.initialize = function() {
   console.log("done");
   return;
 };
+console.log("Yes it does.");
 
 games.Tetravex.prototype._drawBoard = function(surface) {
   // summary: Use the global this._boardX and this._boardY arrays to draw the
@@ -125,6 +123,7 @@ games.Tetravex.prototype._initSurface = function(surface) {
   dojo.extend(
       dojox.gfx.Moveable, {
         onMoving : function(mover, shift) {
+          mover
           if (mover.shape.matrix) {
             // don't go over the left or right edges - optimize by choosing
             // on x
@@ -147,17 +146,7 @@ games.Tetravex.prototype._initSurface = function(surface) {
   // make the tile movable.
   moveMe = new dojox.gfx.Moveable(
       rectangle);
-
-  // subscribe to the global moving object stop event. Any time a tile
-  // stops moving this is called.
-  /*
-   * dojo.subscribe( "/gfx/move/stop", this, function moveToNearestSquare(mover) {
-   * console.log("stopped!"); games.Tetravex.prototype._stoppedMoving(); });
-   * 
-   * games.Tetravex.prototype._stoppedMoving = function(){ console.log("stopped
-   * moving function!"); };
-   */
-
+  console.log("Yes it does.");
   // subscribe to the global moving object stop event. Any time a tile
   // stops moving this is called.
   dojo.subscribe(
@@ -166,8 +155,10 @@ games.Tetravex.prototype._initSurface = function(surface) {
         console.clear();
         console.log("tile X is " + mover.shape.matrix.dx + "  Y is " + mover.shape.matrix.dy);
 
-        var deltaX = games.Tetravex.prototype._findNearestX(mover.shape.matrix.dx) - mover.shape.matrix.dx;
-        var deltaY = games.Tetravex.prototype._findNearestY(mover.shape.matrix.dy) - mover.shape.matrix.dy;
+        var deltaX = games.Tetravex.prototype._findNearestX(mover.shape.matrix.dx) - mover.shape.matrix.dx
+            + (this._props.padding / 2);
+        var deltaY = games.Tetravex.prototype._findNearestY(mover.shape.matrix.dy) - mover.shape.matrix.dy
+            + (this._props.padding / 2);
 
         mover.shape.applyLeftTransform({
           dx : deltaX,
@@ -177,24 +168,25 @@ games.Tetravex.prototype._initSurface = function(surface) {
 };
 
 games.Tetravex.prototype._findNearestY = function findNearestY(tileY) {
-  return 30;
-  // Quickly find if the tile is in a position less than
-  // half way through the first square
-  console.log("find nearest Y");
-  if (tileY < games.Tetravex.prototype._boardY[0] + games.Tetravex.prototype._half_tile()) {
+  // summary: Examine all the possible y co-ord board values that
+  // the tile may be dropped on and return the nearest.
+  // tileX: the y co-od of the top left corner of the tile
+  
+  // Quickly find if the tile is in a position less than half way through the first square
+  if (tileY < (games.Tetravex.prototype._boardY[0] + games.Tetravex.prototype._half_square())) {
     return games.Tetravex.prototype._boardY[0];
   }
 
+  // iterate over the middle square options
   var i;
-  // iterate over the middle square options.
   for (i = 1; i <= 1; i++) {
-    if (tileY > (games.Tetravex.prototype._boardY[i] - games.Tetravex.prototype._half_tile())
-        && tileY < games.Tetravex.prototype._boardY[i] + games.Tetravex.prototype._half_tile()) {
-      console.log("returning y of " + games.Tetravex.prototype._boardY[i]);
+    var lowerLimit = games.Tetravex.prototype._boardY[i] - games.Tetravex.prototype._half_square();
+    var upperLimit = games.Tetravex.prototype._boardY[i] + games.Tetravex.prototype._half_square();
+    console.log("lower limit > = " + lowerLimit + "   Y:" + tileY + "  > upper limit" + upperLimit);
+    if (upperLimit >= tileY && tileY > lowerLimit) {
       return games.Tetravex.prototype._boardY[i];
     }
   }
-
   return games.Tetravex.prototype._boardY[2];
 };
 
@@ -203,43 +195,54 @@ games.Tetravex.prototype._findNearestX = function(tileX) {
   // the tile may be dropped on and return the nearest.
   // tileX: the x co-od of the top left corner of the tile
 
-  // Quickly find if the tile is in a posistion less than
-  // half way through the first square
-  console.log("x + gap" + games.Tetravex.prototype._boardX[0] + " " + games.Tetravex.prototype._half_tile());
-  if (tileX < games.Tetravex.prototype._boardX[0] + games.Tetravex.prototype._half_tile()) {
+  // pseudo code algorithm for working out where to drop the tile in a 3x3 grid
+  // slightly tricky because of the gap between the boards.
+  // p0 if (tilex <= 20 + half_square) return 20 simple
+  // p1 if (70 + half_square) >= tilex > (70 - half_square) return 70 same
+  // p2 if (120 + half_square) >= tilex > (120 - half_square) return 120 same
+  // p3 if (170 + (padding / 2) >= tilex > (170 - half_square) return 120 tricky - note diff return
+  // p4 if (220 + half_square) >= tilex > (220 - half_square - tile_width - (pad/2)) tricky
+  // p5 if (270 + half_square) >= tilex > (270 - half_square) return 270 same
+  // p6 if (tilex > 320 - half_square)
+  //
+  // 
+  // p0____|_________p1|_________p2|_____p3|_____________p4|_________p5|__________p6
+  // |_:___.___:_|_:___.___:_|_:___.___:_|_:___.___:_|_:___.___:_|_:___.___:|_:___.___:_|
+  // 20__________70_________120_________170_________220_________270________320
+  //
+  // | square line
+  // : padding
+  // . half_square
+
+  // p0
+  if (tileX <= games.Tetravex.prototype._boardX[0] + games.Tetravex.prototype._half_square()) {
     return games.Tetravex.prototype._boardX[0];
   }
 
-  var i;
-  // iterate over the middle sqaure options.
-  for (i = 1; i <= 5; i++) {
+  var p;
+  // iterate over the middle square options.
+  for (p = 1; p <= 5; p++) {
+    var f = 0;
+    var upperLimit = games.Tetravex.prototype._boardX[p] + games.Tetravex.prototype._half_square();
+    var lowerLimit = games.Tetravex.prototype._boardX[p] - games.Tetravex.prototype._half_square();
 
-    // include half the gap when looking at the sqaure after it
-    if (i == 2) {
-      games.Tetravex.prototype._props.plus_pad = games.Tetravex.prototype._half_tile();
+    if (p == 3) {
+      upperLimit = games.Tetravex.prototype._boardX[p] + (games.Tetravex.prototype._props.padding / 2);
+      f = 1;
     }
 
-    // this is the gap between the boards, no tile drop allowed.
-    if (i == 3) {
-      continue;
+    if (p == 4) {
+      lowerLimit = games.Tetravex.prototype._boardX[p] - games.Tetravex.prototype._half_square()
+          - games.Tetravex.prototype._props.tile_size - (games.Tetravex.prototype._props.padding / 2);
     }
 
-    // include half the gap when looking at the sqaure after it
-    if (i == 4) {
-      games.Tetravex.prototype._props.minus_gap = games.Tetravex.prototype._half_tile();
-    }
+    console.log("Interation " + p + " - Is " + upperLimit + " >= " + tileX + " > " + lowerLimit + " therefore square "
+        + games.Tetravex.prototype._boardX[p]);
 
-    console.log("Interation " + i + " x > "
-        + (games.Tetravex.prototype._boardX[i] - games.Tetravex.prototype._half_tile()) + " x < "
-        + (games.Tetravex.prototype._boardX[i] + games.Tetravex.prototype._half_tile()));
-
-    if (tileX > (games.Tetravex.prototype._boardX[i] - games.Tetravex.prototype._half_tile() - games.Tetravex.prototype._props.minus_gap)
-        && tileX < (games.Tetravex.prototype._boardX[i] + games.Tetravex.prototype._half_tile() + games.Tetravex.prototype._props.plus_pad)) {
-      console.log("returning x of " + games.Tetravex.prototype._boardX[i]);
-      return games.Tetravex.prototype._boardX[i];
+    if ((upperLimit >= tileX) && (tileX > lowerLimit)) {
+      return games.Tetravex.prototype._boardX[p - f];
     }
-    games.Tetravex.prototype._props.plus_pad = games.Tetravex.prototype._props.minus_gap = 0;
   }
-  // or greater than the last.
+  // must be p6
   return games.Tetravex.prototype._boardX[6];
 };

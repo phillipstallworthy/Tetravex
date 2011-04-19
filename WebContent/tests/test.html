@@ -20,7 +20,7 @@
                     {
                       name : "test1",
                       setUp : function() {
-                        this.boardX = games.Tetravex.prototype._boardX;
+                        this.boardX = games.Tetravex._boardX;
                         this.tetravex = new games.Tetravex;
                         // Valid x's for 3x3 board 20, 70, 120, 220, 270, 320
                         // There are 5 key boundaries that either side of the tile goes one way or the other, so 10 test datas
@@ -35,7 +35,7 @@
                         var i, expected, actual;
                         for (i = 0; i < this.testData.length; i++) {
                           expected = this.testData[i][1];
-                          actual = games.Tetravex.prototype._findNearestX(this.testData[i][0]);
+                          actual = games.Tetravex._findNearestX(this.testData[i][0]);
                           console.log("######  test value : " + this.testData[i][0] + " actual returned value : " + actual + " expected value : "
                               + expected + "  ######");
                           doh.assertEqual(

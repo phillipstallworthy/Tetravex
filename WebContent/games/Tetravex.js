@@ -93,7 +93,7 @@ games.Tetravex._drawBoard = function(surface) {
   }
 };
 
-games.Tetravex._tile = [ 2 ];
+games.Tetravex._tile = [ 3 ];
 
 games.Tetravex._initSurface = function(surface) {
   // summary: draw the board, make the tiles
@@ -129,6 +129,8 @@ games.Tetravex._initSurface = function(surface) {
       "green", games.Tetravex._boardX[4], games.Tetravex._boardY[0]);
   games.Tetravex._tile[1] = createTile(
       "red", games.Tetravex._boardX[5], games.Tetravex._boardY[0]);
+  games.Tetravex._tile[2] = createTile(
+      "yellow", games.Tetravex._boardX[6], games.Tetravex._boardY[0]);
   var t;
   for (t = 0; t < games.Tetravex._tile.length; t++) {
     // add tile to the surface

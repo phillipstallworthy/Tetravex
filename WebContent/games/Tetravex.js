@@ -1,4 +1,7 @@
-dojo.provide("games.Tetravex");
+dojo.provide(
+    "games.Tetravex", null, {
+      p_tileSize : 40
+    }); // how do I get to this, do all my functins need to be in here.
 
 dojo.require("dojox.gfx");
 dojo.require("dojox.gfx.move");
@@ -10,30 +13,30 @@ games.Tetravex = function() {
 
 // properties object - normally only stuff that doesn't change goes in the prototype
 // because when many objects are created of the same type there is only one prototype.
+// can this whole thing be a object? What is provide providing again?
 games.Tetravex._props = {
-  suface_width : 420,
+  suface_width : 400,
   suface_height : 200,
-  tile_size : 40, // keep me even.
+  tileSize : 40,
   indent : 20,
-  padding : 10
-// the total padding around the tile. IE 5 each side time 2.
+  padding : 5
 };
 
 games.Tetravex._half_square = function() {
-  return (this._props.tile_size / 2) + (this._props.padding / 2); // convenience
+  return (this._props.tileSize / 2) + (this._props.padding); // convenience
 };
 
 // 3x3 board - need to create these arrays dynamically for different size
 // playing boards
 // is the top left co-ordinated of the squares that make up the two boards
 games.Tetravex._boardX = [ games.Tetravex._props.indent,
-    games.Tetravex._props.indent + games.Tetravex._props.tile_size + games.Tetravex._props.padding,
-    games.Tetravex._props.indent + ((games.Tetravex._props.tile_size + games.Tetravex._props.padding) * 2),
-    games.Tetravex._props.indent + ((games.Tetravex._props.tile_size + games.Tetravex._props.padding) * 3),
-    games.Tetravex._props.indent + ((games.Tetravex._props.tile_size + games.Tetravex._props.padding) * 4),
-    games.Tetravex._props.indent + ((games.Tetravex._props.tile_size + games.Tetravex._props.padding) * 5),
-    games.Tetravex._props.indent + ((games.Tetravex._props.tile_size + games.Tetravex._props.padding) * 6),
-    games.Tetravex._props.indent + ((games.Tetravex._props.tile_size + games.Tetravex._props.padding) * 7) ];
+    games.Tetravex._props.indent + games.Tetravex._props.tileSize + games.Tetravex._props.padding * 2,
+    games.Tetravex._props.indent + ((games.Tetravex._props.tileSize + games.Tetravex._props.padding * 2) * 2),
+    games.Tetravex._props.indent + ((games.Tetravex._props.tileSize + games.Tetravex._props.padding * 2) * 3),
+    games.Tetravex._props.indent + ((games.Tetravex._props.tileSize + games.Tetravex._props.padding * 2) * 4),
+    games.Tetravex._props.indent + ((games.Tetravex._props.tileSize + games.Tetravex._props.padding * 2) * 5),
+    games.Tetravex._props.indent + ((games.Tetravex._props.tileSize + games.Tetravex._props.padding * 2) * 6),
+    games.Tetravex._props.indent + ((games.Tetravex._props.tileSize + games.Tetravex._props.padding * 2) * 7) ];
 
 // The tiles are squares so the Y co-ords are the same as the first 3 X co-ords
 var y;
@@ -101,7 +104,6 @@ games.Tetravex._initSurface = function(surface) {
 
   // override onMoving on your object and modify the "shift" object
   // so it never moves a shape outside of a specified boundaries.
-  // from here
   // http://dojo-toolkit.33424.n3.nabble.com/gfx-constrainedMoveable-td176539.html
   dojo.extend(
       dojox.gfx.Moveable, {
@@ -111,28 +113,42 @@ games.Tetravex._initSurface = function(surface) {
             // on x
             // value, 2 is the border??
             if ((shift.dx > 0 && mover.shape.matrix.dx > (games.Tetravex._props.suface_width
-                - games.Tetravex._props.tile_size - 2))
+                - games.Tetravex._props.tileSize - 2))
                 || (shift.dx < 0 && mover.shape.matrix.dx < 2)) {
               shift.dx = 0;
             }
             // don't go over the top or bottom
             if ((shift.dy < 0 && mover.shape.matrix.dy < 2)
                 || (shift.dy > 0 && mover.shape.matrix.dy > (games.Tetravex._props.suface_height
-                    - games.Tetravex._props.tile_size - 2))) {
+                    - games.Tetravex._props.tileSize - 2))) {
               shift.dy = 0;
             }
           }
         }
       });
 
-  games.Tetravex._tile[0] = createTile(
-      "green", games.Tetravex._boardX[4], games.Tetravex._boardY[0]);
+  // this section needs some tidy up
+  games.Tetravex._tile[0] = createTile(1, 2, 3, 4);
+  games.Tetravex._tile[0].applyLeftTransform({
+    dx : games.Tetravex._boardX[4] + (games.Tetravex._props.padding),
+    dy : games.Tetravex._boardY[0] + (games.Tetravex._props.padding)
+  });
+
   games.Tetravex._tile[1] = createTile(
-      "red", games.Tetravex._boardX[5], games.Tetravex._boardY[0]);
+      5, 6, 7, 8);
+  games.Tetravex._tile[1].applyLeftTransform({
+    dx : games.Tetravex._boardX[5] + (games.Tetravex._props.padding),
+    dy : games.Tetravex._boardY[0] + (games.Tetravex._props.padding)
+  });
+
   games.Tetravex._tile[2] = createTile(
-      "yellow", games.Tetravex._boardX[6], games.Tetravex._boardY[0]);
-  var t;
-  for (t = 0; t < games.Tetravex._tile.length; t++) {
+      9, 0, 1, 2);
+  games.Tetravex._tile[2].applyLeftTransform({
+    dx : games.Tetravex._boardX[6] + (games.Tetravex._props.padding),
+    dy : games.Tetravex._boardY[0] + (games.Tetravex._props.padding)
+  });
+
+  for ( var t = 0; t < games.Tetravex._tile.length; t++) {
     // add tile to the surface
     // games.Tetravex._tile[t] = createTile("green",games.Tetravex._boardX[4], games.Tetravex._boardY[0]);
     // and make it moveable
@@ -143,22 +159,41 @@ games.Tetravex._initSurface = function(surface) {
           moveToNearestSquare(mover);
         });
   }
-  ;
-  function createTile(colour, startx, starty) {
-    return surface.createRect(
-        {
-          x : 0,
-          y : 0,
-          width : games.Tetravex._props.tile_size,
-          height : games.Tetravex._props.tile_size,
-          r : 3
-        }).setFill(
-        colour).setStroke(
-        "blue").applyLeftTransform(
-        {
-          dx : startx + (games.Tetravex._props.padding / 2),
-          dy : starty + (games.Tetravex._props.padding / 2)
-        });
+
+  // I think maybe remove the transform, just make it a create tile function
+  // and the colour should be a number.
+  function createTile(topNum, leftNum, bottomNum, rightNum) {
+    var tileSize = games.Tetravex._props.tileSize;
+    var middle = games.Tetravex._props.tileSize / 2;
+    var tileGroup = surface.createGroup();
+    // can this come from CSS?
+    // 0 black, 1 brown, 2 red, 3 orange, 4 yellow, 5 green, 6 blue, 7 purple, 8 grey, 9 white.
+    var colour = [ "black", "#C17D11", "#CC0000", "#F57900", "#EDD400", "#73D216", "#3465A4", "#75507B", "#BABDB6",
+        "white" ];
+
+    var top = tileGroup.createPolyline([ 0, 0, tileSize, 0, middle, middle, 0, 0 ]);
+    var left = tileGroup.createPolyline([ 0, 0, middle, middle, 0, tileSize, 0, 0 ]);
+    var bottom = tileGroup.createPolyline([ 0, tileSize, middle, middle, tileSize, tileSize, 0, tileSize ]);
+    var right = tileGroup.createPolyline([ tileSize, tileSize, middle, middle, tileSize, 0, tileSize, tileSize ]);
+
+    top.setFill(
+        colour[topNum]).setStroke(
+        "black");
+    left.setFill(
+        colour[leftNum]).setStroke(
+        "black");
+    bottom.setFill(
+        colour[bottomNum]).setStroke(
+        "black");
+    right.setFill(
+        colour[rightNum]).setStroke(
+        "black");
+    
+    tileGroup.createText("1");
+
+    // is shape/group an object? can I add properties to it, IE top 1, left 4, the numbers.?
+    return tileGroup;
+
   }
 };
 
@@ -168,9 +203,9 @@ var moveToNearestSquare = function(mover) {
   // console.log("tile X is " + mover.shape.matrix.dx + " Y is " + mover.shape.matrix.dy);
 
   var deltaX = games.Tetravex._findNearestX(mover.shape.matrix.dx) - mover.shape.matrix.dx
-      + (games.Tetravex._props.padding / 2);
+      + (games.Tetravex._props.padding);
   var deltaY = games.Tetravex._findNearestY(mover.shape.matrix.dy) - mover.shape.matrix.dy
-      + (games.Tetravex._props.padding / 2);
+      + (games.Tetravex._props.padding);
 
   mover.shape.applyLeftTransform({
     dx : deltaX,
@@ -211,7 +246,7 @@ games.Tetravex._findNearestX = function(tileX) {
   // p0 if (tilex <= 20 + half_square) return 20
   // p1 if (70 + half_square) >= tilex > (70 - half_square) return 70
   // p2 if (120 + half_square) >= tilex > (120 - half_square) return 120
-  // p3 if (170 + (padding / 2) >= tilex > (170 - half_square) return 120
+  // p3 if (170 + (padding) >= tilex > (170 - half_square) return 120
   // p4 if (220 + half_square) >= tilex > (220 - half_square - tile_width - (pad/2))
   // p5 if (270 + half_square) >= tilex > (270 - half_square) return 270
   // p6 if (tilex > 320 - half_square)
@@ -238,13 +273,13 @@ games.Tetravex._findNearestX = function(tileX) {
     var lowerLimit = games.Tetravex._boardX[p] - games.Tetravex._half_square();
 
     if (p == 3) {
-      upperLimit = games.Tetravex._boardX[p] + (games.Tetravex._props.padding / 2);
+      upperLimit = games.Tetravex._boardX[p] + (games.Tetravex._props.padding);
       f = 1;
     }
 
     if (p == 4) {
-      lowerLimit = games.Tetravex._boardX[p] - games.Tetravex._half_square() - games.Tetravex._props.tile_size
-          - (games.Tetravex._props.padding / 2);
+      lowerLimit = games.Tetravex._boardX[p] - games.Tetravex._half_square() - games.Tetravex._props.tileSize
+          - (games.Tetravex._props.padding);
     }
 
     // console.log("Interation " + p + " - Is " + upperLimit + " >= " + tileX + " > " + lowerLimit + " therefore square

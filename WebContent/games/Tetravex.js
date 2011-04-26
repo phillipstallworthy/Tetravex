@@ -128,7 +128,8 @@ games.Tetravex._initSurface = function(surface) {
       });
 
   // this section needs some tidy up
-  games.Tetravex._tile[0] = createTile(1, 2, 3, 4);
+  games.Tetravex._tile[0] = createTile(
+      1, 2, 3, 4);
   games.Tetravex._tile[0].applyLeftTransform({
     dx : games.Tetravex._boardX[4] + (games.Tetravex._props.padding),
     dy : games.Tetravex._boardY[0] + (games.Tetravex._props.padding)
@@ -188,8 +189,20 @@ games.Tetravex._initSurface = function(surface) {
     right.setFill(
         colour[rightNum]).setStroke(
         "black");
-    
-    tileGroup.createText("1");
+
+    var text = tileGroup.createText({
+      x : 15,
+      y : 13,
+      text : "1"
+    });
+    text.setStroke(
+        "white");
+    text.setFill("white");
+    text.setFont({
+      family : "sans-serif"
+    });
+    console.log("font" + text.getFont() + "colour " + text.color);
+    // .setFill( colour["blacka"]).setStroke("black");
 
     // is shape/group an object? can I add properties to it, IE top 1, left 4, the numbers.?
     return tileGroup;

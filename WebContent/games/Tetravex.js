@@ -1,54 +1,63 @@
 dojo.provide(
     "games.Tetravex", null, {
       p_tileSize : 40
-    }); // how do I get to this, do all my functins need to be in here.
+    });
 
 dojo.require("dojox.gfx");
 dojo.require("dojox.gfx.move");
 
-// set up a name space (page 45 Dojo: The Definitive Guide, 1st Edition)
+// set up a name space
 games.Tetravex = function() {
-
 };
 
-// properties object - normally only stuff that doesn't change goes in the prototype
-// because when many objects are created of the same type there is only one prototype.
-// can this whole thing be a object? What is provide providing again?
+// better as private variables in a closure?
 games.Tetravex._props = {
   suface_width : 400,
   suface_height : 200,
   tileSize : 40,
   indent : 20,
-  padding : 5
+  padding : 0
+};
+
+games.Tetravex.setPadding = function(padding) {
+  games.Tetravex._props.padding = padding;
+  games.Tetravex.init_boardX();
+  games.Tetravex.init_boardY();
 };
 
 games.Tetravex._half_square = function() {
-  return (this._props.tileSize / 2) + (this._props.padding); // convenience
+  return (games.Tetravex._props.tileSize / 2) + (games.Tetravex._props.padding); // convenience
 };
 
-// 3x3 board - need to create these arrays dynamically for different size
-// playing boards
+// 3x3 board - need to create these arrays dynamically for different size playing boards
 // is the top left co-ordinated of the squares that make up the two boards
-games.Tetravex._boardX = [ games.Tetravex._props.indent,
-    games.Tetravex._props.indent + games.Tetravex._props.tileSize + games.Tetravex._props.padding * 2,
-    games.Tetravex._props.indent + ((games.Tetravex._props.tileSize + games.Tetravex._props.padding * 2) * 2),
-    games.Tetravex._props.indent + ((games.Tetravex._props.tileSize + games.Tetravex._props.padding * 2) * 3),
-    games.Tetravex._props.indent + ((games.Tetravex._props.tileSize + games.Tetravex._props.padding * 2) * 4),
-    games.Tetravex._props.indent + ((games.Tetravex._props.tileSize + games.Tetravex._props.padding * 2) * 5),
-    games.Tetravex._props.indent + ((games.Tetravex._props.tileSize + games.Tetravex._props.padding * 2) * 6),
-    games.Tetravex._props.indent + ((games.Tetravex._props.tileSize + games.Tetravex._props.padding * 2) * 7) ];
+games.Tetravex._boardX = [];
+
+games.Tetravex.init_boardX = function() {
+  games.Tetravex._boardX = [ games.Tetravex._props.indent,
+      games.Tetravex._props.indent + games.Tetravex._props.tileSize + games.Tetravex._props.padding * 2,
+      games.Tetravex._props.indent + ((games.Tetravex._props.tileSize + games.Tetravex._props.padding * 2) * 2),
+      games.Tetravex._props.indent + ((games.Tetravex._props.tileSize + games.Tetravex._props.padding * 2) * 3),
+      games.Tetravex._props.indent + ((games.Tetravex._props.tileSize + games.Tetravex._props.padding * 2) * 4),
+      games.Tetravex._props.indent + ((games.Tetravex._props.tileSize + games.Tetravex._props.padding * 2) * 5),
+      games.Tetravex._props.indent + ((games.Tetravex._props.tileSize + games.Tetravex._props.padding * 2) * 6),
+      games.Tetravex._props.indent + ((games.Tetravex._props.tileSize + games.Tetravex._props.padding * 2) * 7) ];
+};
+games.Tetravex.init_boardX();
 
 // The tiles are squares so the Y co-ords are the same as the first 3 X co-ords
-var y;
 games.Tetravex._boardY = [];
-for (y = 0; y < 4; y++) {
-  games.Tetravex._boardY[y] = games.Tetravex._boardX[y];
-}
+games.Tetravex.init_boardY = function() {
+  for ( var y = 0; y < 4; y++) {
+    games.Tetravex._boardY[y] = games.Tetravex._boardX[y];
+  }
+};
+games.Tetravex.init_boardY();
 
 games.Tetravex.initialize = function() {
   var container = dojo.byId("tetravex");
   var surface = dojox.gfx.createSurface(
-      container, this._props.suface_width, this._props.suface_height);
+      container, games.Tetravex._props.suface_width, games.Tetravex._props.suface_height);
   surface.whenLoaded(function() {
     games.Tetravex._initSurface(surface);
   });
@@ -56,9 +65,7 @@ games.Tetravex.initialize = function() {
 };
 
 games.Tetravex._drawBoard = function(surface) {
-  // summary: Use the global this._boardX and this._boardY arrays to draw the
-  // board grid
-  // lines.
+  // summary: Use the global this._boardX and this._boardY arrays to draw the board grid
 
   var path = surface.createPath().setStroke(
       "black");
@@ -66,9 +73,9 @@ games.Tetravex._drawBoard = function(surface) {
   // left board horizontal lines
   var i;
   for (i = 0; i < 4; i++) {
-    var x = this._boardX[0];
-    var y = this._boardY[i];
-    var h = this._boardX[3];
+    var x = games.Tetravex._boardX[0];
+    var y = games.Tetravex._boardY[i];
+    var h = games.Tetravex._boardX[3];
     path.moveTo(
         x, y);
     path.hLineTo(h);
@@ -78,21 +85,21 @@ games.Tetravex._drawBoard = function(surface) {
   // left board vertical lines
   for (i = 0; i < 4; i++) {
     path.moveTo(
-        this._boardX[i], this._boardY[0]).vLineTo(
-        this._boardY[3]).closePath();
+        games.Tetravex._boardX[i], games.Tetravex._boardY[0]).vLineTo(
+        games.Tetravex._boardY[3]).closePath();
   }
 
   // right board horizontal lines
   for (i = 0; i < 4; i++) {
     path.moveTo(
-        this._boardX[4], this._boardY[i]).hLineTo(
-        this._boardX[7]).closePath();
+        games.Tetravex._boardX[4], games.Tetravex._boardY[i]).hLineTo(
+        games.Tetravex._boardX[7]).closePath();
   }
   // right board vertical lines
   for (i = 4; i < 8; i++) {
     path.moveTo(
-        this._boardX[i], this._boardY[0]).vLineTo(
-        this._boardY[3]).closePath();
+        games.Tetravex._boardX[i], games.Tetravex._boardY[0]).vLineTo(
+        games.Tetravex._boardY[3]).closePath();
   }
 };
 
@@ -150,9 +157,7 @@ games.Tetravex._initSurface = function(surface) {
   });
 
   for ( var t = 0; t < games.Tetravex._tile.length; t++) {
-    // add tile to the surface
-    // games.Tetravex._tile[t] = createTile("green",games.Tetravex._boardX[4], games.Tetravex._boardY[0]);
-    // and make it moveable
+    // add tile to the surface and make it moveable
     moveMe = new dojox.gfx.Moveable(
         games.Tetravex._tile[t]);
     dojo.subscribe(
@@ -161,8 +166,6 @@ games.Tetravex._initSurface = function(surface) {
         });
   }
 
-  // I think maybe remove the transform, just make it a create tile function
-  // and the colour should be a number.
   function createTile(topNum, leftNum, bottomNum, rightNum) {
     var tileSize = games.Tetravex._props.tileSize;
     var middle = games.Tetravex._props.tileSize / 2;
@@ -189,20 +192,56 @@ games.Tetravex._initSurface = function(surface) {
     right.setFill(
         colour[rightNum]).setStroke(
         "black");
+    
+    //colour = select_colour();
 
-    var text = tileGroup.createText({
-      x : 15,
-      y : 13,
-      text : "1"
-    });
-    text.setStroke(
-        "white");
-    text.setFill("white");
-    text.setFont({
-      family : "sans-serif"
-    });
-    console.log("font" + text.getFont() + "colour " + text.color);
-    // .setFill( colour["blacka"]).setStroke("black");
+    var topText = tileGroup.createText(
+        {
+          x : 16,
+          y : 13,
+          text : "1"
+        }).setStroke(
+        "white").setFill(
+        "white").setFont(
+        {
+          family : "sans-serif"
+        });
+
+    var leftText = tileGroup.createText(
+        {
+          x : 3,
+          y : 25,
+          text : "1"
+        }).setStroke(
+        "white").setFill(
+        "white").setFont(
+        {
+          family : "sans-serif"
+        });
+
+    var bottomText = tileGroup.createText(
+        {
+          x : 16,
+          y : 37,
+          text : "1"
+        }).setStroke(
+        "white").setFill(
+        "white").setFont(
+        {
+          family : "sans-serif"
+        });
+    
+    var rightText = tileGroup.createText(
+        {
+          x : 29,
+          y : 25,
+          text : "1"
+        }).setStroke(
+        "white").setFill(
+        "white").setFont(
+        {
+          family : "sans-serif"
+        });
 
     // is shape/group an object? can I add properties to it, IE top 1, left 4, the numbers.?
     return tileGroup;
@@ -237,8 +276,7 @@ games.Tetravex._findNearestY = function findNearestY(tileY) {
   }
 
   // iterate over the middle square options
-  var i;
-  for (i = 1; i <= 1; i++) {
+  for ( var i = 1; i <= 1; i++) {
     var lowerLimit = games.Tetravex._boardY[i] - games.Tetravex._half_square();
     var upperLimit = games.Tetravex._boardY[i] + games.Tetravex._half_square();
     // console.log("lower limit > = " + lowerLimit + " Y:" + tileY + " > upper limit" + upperLimit);
@@ -250,6 +288,8 @@ games.Tetravex._findNearestY = function findNearestY(tileY) {
 };
 
 games.Tetravex._findNearestX = function(tileX) {
+  console.log("games.Tetravex._findNearestX padding " + games.Tetravex._props.padding);
+  console.log("games.Tetravex._findNearestX half square " + games.Tetravex._half_square());
   // summary: Examine all the possible x co-ord board values that
   // the tile may be dropped on and return the nearest.
   // tileX: the x co-od of the top left corner of the tile
@@ -278,9 +318,8 @@ games.Tetravex._findNearestX = function(tileX) {
     return games.Tetravex._boardX[0];
   }
 
-  var p;
   // iterate over the middle square options.
-  for (p = 1; p <= 5; p++) {
+  for ( var p = 1; p <= 5; p++) {
     var f = 0;
     var upperLimit = games.Tetravex._boardX[p] + games.Tetravex._half_square();
     var lowerLimit = games.Tetravex._boardX[p] - games.Tetravex._half_square();
@@ -295,9 +334,8 @@ games.Tetravex._findNearestX = function(tileX) {
           - (games.Tetravex._props.padding);
     }
 
-    // console.log("Interation " + p + " - Is " + upperLimit + " >= " + tileX + " > " + lowerLimit + " therefore square
-    // "
-    // + games.Tetravex._boardX[p]);
+    console.log("Interation " + p + " - Is " + upperLimit + " >= " + tileX + " > " + lowerLimit + " therefore square"
+        + games.Tetravex._boardX[p]);
 
     if ((upperLimit >= tileX) && (tileX > lowerLimit)) {
       return games.Tetravex._boardX[p - f];

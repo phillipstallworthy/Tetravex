@@ -20,13 +20,16 @@
                     {
                       name : "test1",
                       setUp : function() {
-                        this.boardX = games.Tetravex._boardX;
-                        this.tetravex = new games.Tetravex;
-                        // Valid x's for 3x3 board 20, 70, 120, 220, 270, 320
-                        // There are 5 key boundaries that either side of the tile goes one way or the other, so 10 test datas
-                        this.testData = [ [ 45, 20 ], [ 46, 70 ],
-                            [ 95, 70 ], [ 96, 120 ], [ 175, 120 ], [ 176, 220 ], [ 245, 220 ], [ 246, 270 ],
-                            [ 295, 270 ], [ 296, 320 ]];
+                        // this test only works with a padding of 5 as the test data is manually
+                        // calculated. To generate the data for all padding would require the same
+                        // algorithm that we are testing, which seems pointless.
+                        games.Tetravex.setPadding(5);
+                        // Valid x's for 3x3 board with padding 5 - 20, 70, 120, 220, 270, 320
+                        // There are 5 key boundaries that either side of the tile goes one way or 
+                        // the other, so 10 test datas
+                        this.testData = [ [ 45, 20 ], [ 46, 70 ], [ 95, 70 ], [ 96, 120 ], [ 175, 120 ], [ 176, 220 ],
+                            [ 245, 220 ], [ 246, 270 ], [ 295, 270 ], [ 296, 320 ] ];
+
                       },
                       runTest : function(t) {
                         t.assertTrue(1);
@@ -36,15 +39,14 @@
                         for (i = 0; i < this.testData.length; i++) {
                           expected = this.testData[i][1];
                           actual = games.Tetravex._findNearestX(this.testData[i][0]);
-                          console.log("######  test value : " + this.testData[i][0] + " actual returned value : " + actual + " expected value : "
-                              + expected + "  ######");
+                          console.log("######  test value : " + this.testData[i][0] + " actual returned value : "
+                              + actual + " expected value : " + expected + "  ######");
                           doh.assertEqual(
                               expected, actual);
-
                         }
                       },
                       tearDown : function() {
-                        delete this.boardX;
+                        delete boardX;
                       }
                     }, {
                       name : "test2",

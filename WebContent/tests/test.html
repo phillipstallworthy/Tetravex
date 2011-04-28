@@ -18,7 +18,7 @@
                 "testgroup",
                 [
                     {
-                      name : "test1",
+                      name : "tile drop test x-axis 3x3 board",
                       setUp : function() {
                         // this test only works with a padding of 5 as the test data is manually
                         // calculated. To generate the data for all padding would require the same
@@ -27,33 +27,46 @@
                         // Valid x's for 3x3 board with padding 5 - 20, 70, 120, 220, 270, 320
                         // There are 5 key boundaries that either side of the tile goes one way or 
                         // the other, so 10 test datas
-                        this.testData = [ [ 45, 20 ], [ 46, 70 ], [ 95, 70 ], [ 96, 120 ], [ 175, 120 ], [ 176, 220 ],
+                        var xaxis3x3 = [ [ 45, 20 ], [ 46, 70 ], [ 95, 70 ], [ 96, 120 ], [ 175, 120 ], [ 176, 220 ],
                             [ 245, 220 ], [ 246, 270 ], [ 295, 270 ], [ 296, 320 ] ];
-
+                        this.testData = [];
+                        this.testData[3] = xaxis3x3;
                       },
                       runTest : function(t) {
-                        t.assertTrue(1);
                         console
                             .log("_findNearestX test before after and in the middle of the board sqaures to see that the tiles get dropped in the right place.");
-                        var i, expected, actual;
-                        for (i = 0; i < this.testData.length; i++) {
-                          expected = this.testData[i][1];
-                          actual = games.Tetravex._findNearestX(this.testData[i][0]);
-                          console.log("######  test value : " + this.testData[i][0] + " actual returned value : "
-                              + actual + " expected value : " + expected + "  ######");
-                          doh.assertEqual(
-                              expected, actual);
+
+                        // do it for 2, 3, 4, 5, and 6
+                        for ( var f = 3; f < 4; f++) {
+                          var i, expected, actual;
+                          for (i = 0; i < this.testData[f].length; i++) {
+                            expected = this.testData[f][i][1];
+                            actual = games.Tetravex._findNearestX(this.testData[f][i][0]);
+                            console.log("######  test value : " + this.testData[f][i][0] + " actual returned value : "
+                                + actual + " expected value : " + expected + "  ######");
+                            doh.assertEqual(
+                                expected, actual);
+                          }
                         }
                       },
                       tearDown : function() {
                         delete boardX;
                       }
-                    }, {
-                      name : "test2",
+                    },
+                    {
+                      name : "board resize test",
                       setUp : function() {
                       },
                       runTest : function(t) {
-                        t.assertTrue(1);
+                        for ( var size = 2; size < 7; size++) {
+                          var testArray = games.Tetravex.init_boardX(size);
+                          var actual = testArray.length;
+                          var expected = (2 * size) + 2;
+                          console.log("For board size " + size + " I expect an array of size " + expected
+                              + " and I got " + actual);
+                          doh.assertEqual(
+                              expected, actual);
+                        }
                       },
                       tearDown : function() {
                       }

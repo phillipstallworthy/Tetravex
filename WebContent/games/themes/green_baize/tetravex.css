@@ -1,6 +1,28 @@
 @CHARSET "UTF-8";
 
-#tetravex
+#tetravex 
 {
-width: 400px; height: 200px; background-color: #E1EFBB;
+	width: 400px;
+	height: 200px;
+	background-color: #0B772E;
+}
+
+#tetravexTitle 
+{
+	width: 400px;
+	height: 25px;
+	background-color: #6C5E4E;
+	text-align: right;
+}
+
+#gameTime
+{
+	text-align: right;
+	color : white;
+	font-family: serif;
+}
+
+#buttons
+{
+	float: left;	
 }

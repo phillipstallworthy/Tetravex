@@ -3,23 +3,42 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>Tetravex</title>
-<link rel="stylesheet" type="text/css" href="games/themes/green_baize/tetravex.css" />
+<link rel="stylesheet" type="text/css"
+	href="games/themes/green_baize/tetravex.css" />
 <script type="text/javascript" src="dojo-release-1.6.0-src/dojo/dojo.js"
-	djConfig="cacheBust:(new Date()).getTime(),modulePaths:{'games.Tetravex':'../../games/Tetravex'}"> 
+	djConfig="cacheBust:(new Date()).getTime(),modulePaths:{'games.Tetravex':'../../games/Tetravex'}">
+  
 </script>
 
 <script type="text/javascript">
   dojo.require("games.Tetravex");
   dojo.addOnLoad(function() {
-    //var t = new games.Tetravex;
-    //t.initialize();
     games.Tetravex.initialize();
+    dojo.connect(
+        dojo.byId("buttonReset"), "onclick", null, function(evt) {
+          games.Tetravex.reset();
+        });
+    dojo.connect(
+        dojo.byId("buttonPlus"), "onclick", null, function(evt) {
+          games.Tetravex.resetPlus();
+        });
+    dojo.connect(
+        dojo.byId("buttonMinus"), "onclick", null, function(evt) {
+          games.Tetravex.resetMinus();
+        });
   });
 </script>
 
 
 </head>
 <body>
+	<div id="tetravexTitle">
+		<span id="buttons">
+			<button type="button" id="buttonReset">Reset</button>
+			<button type="button" id="buttonMinus">-</button>
+			<button type="button" id="buttonPlus">+</button> </span> <span
+			id="gameTime">00:00:00</span>
+	</div>
 	<div id="tetravex"></div>
 </body>
 </html>

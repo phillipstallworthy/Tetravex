@@ -8,7 +8,6 @@ dojo.require("dojox.gfx.move");
 games.Tetravex = function() {
 };
 
-// better as just variables?
 games.Tetravex._props = {
   suface_width : 400,
   suface_height : 200,
@@ -19,16 +18,19 @@ games.Tetravex._boardX = [];
 games.Tetravex._boardY = [];
 games.Tetravex._half_square = 0; // half a square including padding
 games.Tetravex._tileSize = 0;
-games.Tetravex._boardSize = 3;
+games.Tetravex._boardSize = 2;
 games.Tetravex._surface = null;
 // TODO: A sparse array of square objects that store references to the tiles.??
 games.Tetravex.squares = [];
 // the array that stores the tiles.
 games.Tetravex._tile = [];
+games.Tetravex._tileData = []; // xhr retrieved
 games.Tetravex._origin = {
   x : 0,
   y : 0
 };
+games.Tetravex._dataUrl = "http://wll092/Tetravex/return.php";
+games.Tetravex._timeout = 500; // the timeout for fetching game data
 
 // Set the padding and then reset the board grid arrays.
 games.Tetravex.setPadding = function(padding) {
@@ -43,17 +45,46 @@ games.Tetravex.setTileSize = function(size) {
 
 // Initialise the game.
 games.Tetravex.initialize = function() {
+  // first asynchronously get the data, then do some setup while waiting for the return.
+  var deferred = games.Tetravex._xhrGameData();
   var container = dojo.byId("tetravex");
   games.Tetravex._surface = dojox.gfx.createSurface(
       container, games.Tetravex._props.suface_width, games.Tetravex._props.suface_height);
   games.Tetravex._surface.whenLoaded(function() {
     games.Tetravex._drawBoard();
     games.Tetravex._extendOnMoving();
-    games.Tetravex._createTiles();
+
+    // If the call back has finished or erred then create the tiles ( on error local data is produced)
+    // We will only actually get the 1, error condition if the XHR fails before it gets here
+    // which would require a very small local time out, 1ms on my dev machine was still too long.
+    // else
+    // If we are still waiting for a return then add deferred call backs to the chain that will fire when it does.
+    // Calls to createTiles cannot be put into the original call back functions as there is a chance
+    // they will fire before the surface is loaded, which would be bad.
+    console.debug("XHR fired " + deferred.fired);
+    if (deferred.fired == 0 || deferred.fired == 1) {
+      console.debug("XHR was finished");
+      games.Tetravex._createTiles();
+    } else {
+      deferred.addCallback(function(response) {
+        console.debug("XHR not finished, this additional callback fires when it does.");
+        games.Tetravex._createTiles();
+        return response;
+      });
+      deferred.addErrback(function(response) {
+        console.debug("XHR not finished, this additional errback fires when it does.");
+        games.Tetravex._createTiles();
+        return response;
+      });
+    }
+    // If the local time out is long then maybe a call back has not even been fired yet.
+    // Very cool IMHO, because they will get called, and still work.
+    console.debug("Returning from initialize function. ");
   });
   return;
 };
 
+// reset the board with new tiles
 games.Tetravex.reset = function() {
   for ( var f = 0; f < games.Tetravex._tile.length; f++) {
     games.Tetravex._tile[f].removeShape();
@@ -61,6 +92,7 @@ games.Tetravex.reset = function() {
   games.Tetravex._createTiles();
 };
 
+// reset the board and re-initialise to a size one greater than current
 games.Tetravex.resetPlus = function() {
   if (games.Tetravex._boardSize < 5) {
     games.Tetravex._boardSize++;
@@ -70,6 +102,7 @@ games.Tetravex.resetPlus = function() {
   }
 };
 
+// reset the board and re-initialise to a size one less than current
 games.Tetravex.resetMinus = function() {
   if (games.Tetravex._boardSize > 2) {
     games.Tetravex._boardSize--;
@@ -79,10 +112,43 @@ games.Tetravex.resetMinus = function() {
   }
 };
 
-games.Tetravex._drawBoard = function() {
-  // summary: Use the global this._boardX and this._boardY arrays to draw the board grid
+games.Tetravex._xhrGameData = function() {
+  return dojo.xhrGet({
+    url : games.Tetravex._dataUrl,
+    handleAs : "json", // Strip the comments and eval to a JavaScript object
+    timeout : games.Tetravex._timeout, // Call the error handler if nothing after .5 seconds
+    preventCache : true,
+    content : {
+      boardSize : '2'
+    }, // content is the query string
+    // Run this function if the request is successful
+    load : function(response, ioArgs) {
+      console.debug(
+          "successful xhrGet", response, ioArgs);
+      games.Tetravex._tileData = response.n;
+      return response; // always return the response back
+    },
+    // Run this function if the request is not successful
+    error : function(response, ioArgs) {
+      console.debug("failed xhrGet");
+      games.Tetravex._tileData = games.Tetravex._localTileNumbers.n;
+      return response; // always return the response back
+    }
+  });
+};
 
-  games.Tetravex._initGameSize();
+// if the XHR times out or errors then generate the numbers locally
+// If created locally then the cs check sum will be incorrect and the score
+// will not be eligible for the global high score table, should really be a UI option
+games.Tetravex._localTileNumbers = {
+  "n" : [ [ 1, 1, 1, 1 ], [ 2, 2, 2, 2 ], [ 3, 3, 3, 3 ], [ 4, 4, 4, 4 ] ],
+  "cs" : null
+};
+
+games.Tetravex._drawBoard = function() {
+  // summary: Initialise board size variables and draw the board on the surface
+
+  games.Tetravex._initGlobals();
 
   var path = games.Tetravex._surface.createPath().setStroke(
       "black");
@@ -118,19 +184,15 @@ games.Tetravex._drawBoard = function() {
         games.Tetravex._boardX[i], games.Tetravex._boardY[0]).vLineTo(
         games.Tetravex._boardY[games.Tetravex._boardSize]).closePath();
   }
-
 };
 
-// initialise the x and y board arrays
-games.Tetravex._initGameSize = function() {
-
+games.Tetravex._initGlobals = function() {
+  // initialize the game global variables that are based on board size
+  // used by draw board, and the unit tests
   games.Tetravex._tileSize = games.Tetravex._props.suface_width / ((2 * games.Tetravex._boardSize) + 2);
-
   games.Tetravex._half_square = (games.Tetravex._tileSize / 2) + (games.Tetravex._props.padding);
-
   games.Tetravex._boardX = [];
   games.Tetravex._boardY = [];
-
   games.Tetravex._boardX[0] = games.Tetravex._tileSize / 2;
   // console.debug("board x " + games.Tetravex._boardX[0]);
   for ( var f = 1; f < (2 * games.Tetravex._boardSize) + 2; f++) {
@@ -138,12 +200,10 @@ games.Tetravex._initGameSize = function() {
         + ((games.Tetravex._tileSize + games.Tetravex._props.padding * 2) * (f));
     // console.debug("board x " + games.Tetravex._boardX[f]);
   }
-
   for ( var y = 0; y <= games.Tetravex._boardSize; y++) {
     games.Tetravex._boardY[y] = games.Tetravex._boardX[y];
   }
-
-};
+}
 
 games.Tetravex._extendOnMoving = function() {
 
@@ -178,9 +238,19 @@ games.Tetravex._createTiles = function() {
   var t = 0;
   for ( var y = 0; y < games.Tetravex._boardSize; y++) {
     for ( var x = 1; x <= games.Tetravex._boardSize; x++) {
+
+      // random tiles
+      // games.Tetravex._tile[t] = createTile(Math.ceil(Math.random() * 9), Math.ceil(Math.random() * 9),
+      // Math.ceil(Math.random() * 9), Math.ceil(Math.random() * 9));
+
+      console.debug("tile data " + games.Tetravex._tileData);
+      console.debug("tile data " + games.Tetravex._tileData[t][0] + " " + games.Tetravex._tileData[t][1] + " "
+          + games.Tetravex._tileData[t][2] + " " + games.Tetravex._tileData[t][3]);
+      // use the tile data to populate the tiles
       games.Tetravex._tile[t] = createTile(
-          Math.ceil(Math.random() * 9), Math.ceil(Math.random() * 9), Math.ceil(Math.random() * 9), Math.ceil(Math
-              .random() * 9));
+          games.Tetravex._tileData[t][0], games.Tetravex._tileData[t][1], games.Tetravex._tileData[t][2],
+          games.Tetravex._tileData[t][3]);
+
       games.Tetravex._tile[t].applyLeftTransform({
         dx : games.Tetravex._boardX[games.Tetravex._boardSize + x] + (games.Tetravex._props.padding),
         dy : games.Tetravex._boardY[y] + (games.Tetravex._props.padding)

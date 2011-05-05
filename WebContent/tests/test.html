@@ -25,7 +25,7 @@
                         // algorithm that we are testing, which seems pointless.
                         games.Tetravex.setPadding(5);
                         games.Tetravex._boardSize = 4;
-                        games.Tetravex._initGameSize();
+                        games.Tetravex._initGlobals();
                         // Valid x's for 3x3 board with padding 5 - 20, 70, 120, 220, 270, 320
                         // There are 5 key boundaries that either side of the tile goes one way or 
                         // the other, so 10 test datas
@@ -65,7 +65,7 @@
                       runTest : function(t) {
                         for ( var size = 2; size < 7; size++) {
                           games.Tetravex._boardSize = size;
-                          games.Tetravex._initGameSize();
+                          games.Tetravex._initGlobals();
                           var actual = games.Tetravex._boardX.length;
                           var expected = (2 * size) + 2;
                           console.log("For board size " + size + " I expect an array of size " + expected
@@ -73,6 +73,15 @@
                           doh.assertEqual(
                               expected, actual);
                         }
+                      },
+                      tearDown : function() {
+                      }
+                    }, {
+                      name : "board resize test",
+                      setUp : function() {
+                      },
+                      runTest : function(t) {
+                        games.Tetravex._xhrGameData();
                       },
                       tearDown : function() {
                       }

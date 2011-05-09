@@ -13,7 +13,7 @@
 <script type="text/javascript">
   dojo.require("games.Tetravex");
   dojo.addOnLoad(function() {
-    games.Tetravex.initialize();
+    games.Tetravex.initialize(true);
     dojo.connect(
         dojo.byId("buttonReset"), "onclick", null, function(evt) {
           games.Tetravex.reset();

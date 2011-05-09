@@ -3,6 +3,7 @@ dojo.provide(
 
 dojo.require("dojox.gfx");
 dojo.require("dojox.gfx.move");
+dojo.require("dojo.io.script"); // for the JSONP function
 
 // set up a name space
 games.Tetravex = function() {
@@ -29,8 +30,10 @@ games.Tetravex._origin = {
   x : 0,
   y : 0
 };
-games.Tetravex._dataUrl = "http://wll092/Tetravex/return.php";
-games.Tetravex._timeout = 500; // the timeout for fetching game data
+// games.Tetravex._dataUrl = "http://wll092/Tetravex/return.php";
+//games.Tetravex._dataUrl = "http://localhost:8124"; // local node
+games.Tetravex._dataUrl = "http://tiledata.duostack.net" // remote node
+games.Tetravex._timeout = 1000; // the timeout for fetching game data
 
 // Set the padding and then reset the board grid arrays.
 games.Tetravex.setPadding = function(padding) {
@@ -44,12 +47,17 @@ games.Tetravex.setTileSize = function(size) {
 };
 
 // Initialise the game.
-games.Tetravex.initialize = function() {
+games.Tetravex.initialize = function(createBoard) {
   // first asynchronously get the data, then do some setup while waiting for the return.
   var deferred = games.Tetravex._xhrGameData();
   var container = dojo.byId("tetravex");
-  games.Tetravex._surface = dojox.gfx.createSurface(
-      container, games.Tetravex._props.suface_width, games.Tetravex._props.suface_height);
+
+  if (createBoard) {
+    games.Tetravex._surface = dojox.gfx.createSurface(
+        container, games.Tetravex._props.suface_width, games.Tetravex._props.suface_height);
+  } else {
+    games.Tetravex._surface.clear();
+  }
   games.Tetravex._surface.whenLoaded(function() {
     games.Tetravex._drawBoard();
     games.Tetravex._extendOnMoving();
@@ -86,19 +94,16 @@ games.Tetravex.initialize = function() {
 
 // reset the board with new tiles
 games.Tetravex.reset = function() {
-  for ( var f = 0; f < games.Tetravex._tile.length; f++) {
-    games.Tetravex._tile[f].removeShape();
-  }
-  games.Tetravex._createTiles();
+  games.Tetravex._tile = [];
+  games.Tetravex.initialize(false);
 };
 
 // reset the board and re-initialise to a size one greater than current
 games.Tetravex.resetPlus = function() {
   if (games.Tetravex._boardSize < 5) {
     games.Tetravex._boardSize++;
-    games.Tetravex._surface.clear();
-    games.Tetravex._drawBoard();
-    games.Tetravex._createTiles();
+    games.Tetravex._tile = [];
+    games.Tetravex.initialize(false);
   }
 };
 
@@ -106,20 +111,22 @@ games.Tetravex.resetPlus = function() {
 games.Tetravex.resetMinus = function() {
   if (games.Tetravex._boardSize > 2) {
     games.Tetravex._boardSize--;
-    games.Tetravex._surface.clear();
-    games.Tetravex._drawBoard();
-    games.Tetravex._createTiles();
+    games.Tetravex._tile = [];
+    games.Tetravex.initialize(false);
   }
 };
 
+// this is the JSONP version
 games.Tetravex._xhrGameData = function() {
-  return dojo.xhrGet({
+  return dojo.io.script.get({
+    callbackParamName : "tileDataCallback", // read by the jsonp service
     url : games.Tetravex._dataUrl,
     handleAs : "json", // Strip the comments and eval to a JavaScript object
     timeout : games.Tetravex._timeout, // Call the error handler if nothing after .5 seconds
     preventCache : true,
     content : {
-      boardSize : '2'
+      format : "json",
+      size : games.Tetravex._boardSize
     }, // content is the query string
     // Run this function if the request is successful
     load : function(response, ioArgs) {
@@ -136,6 +143,7 @@ games.Tetravex._xhrGameData = function() {
     }
   });
 };
+
 
 // if the XHR times out or errors then generate the numbers locally
 // If created locally then the cs check sum will be incorrect and the score
@@ -203,7 +211,7 @@ games.Tetravex._initGlobals = function() {
   for ( var y = 0; y <= games.Tetravex._boardSize; y++) {
     games.Tetravex._boardY[y] = games.Tetravex._boardX[y];
   }
-}
+};
 
 games.Tetravex._extendOnMoving = function() {
 
@@ -239,13 +247,14 @@ games.Tetravex._createTiles = function() {
   for ( var y = 0; y < games.Tetravex._boardSize; y++) {
     for ( var x = 1; x <= games.Tetravex._boardSize; x++) {
 
-      // random tiles
+      // random tiles, not playable
       // games.Tetravex._tile[t] = createTile(Math.ceil(Math.random() * 9), Math.ceil(Math.random() * 9),
       // Math.ceil(Math.random() * 9), Math.ceil(Math.random() * 9));
 
-      console.debug("tile data " + games.Tetravex._tileData);
-      console.debug("tile data " + games.Tetravex._tileData[t][0] + " " + games.Tetravex._tileData[t][1] + " "
-          + games.Tetravex._tileData[t][2] + " " + games.Tetravex._tileData[t][3]);
+      //console.debug("tile data " + games.Tetravex._tileData);
+      //console.debug("tile data " + games.Tetravex._tileData[t][0] + " " + games.Tetravex._tileData[t][1] + " "
+      //    + games.Tetravex._tileData[t][2] + " " + games.Tetravex._tileData[t][3]);
+      
       // use the tile data to populate the tiles
       games.Tetravex._tile[t] = createTile(
           games.Tetravex._tileData[t][0], games.Tetravex._tileData[t][1], games.Tetravex._tileData[t][2],

@@ -1,7 +1,7 @@
 Another clone of Tetravex
 =========================
 
-I am writing this web version as an exercise in JavaScript and Dojo, Dijits and unit testing.
+I am writing this web version as an exercise in JavaScript, [Dojo](http://dojotoolkit.org/) and [Node.js](http://nodejs.org/)
 
 
 Game play
@@ -20,14 +20,20 @@ Cool Design Features
   using SVG, VML, Silverlight or Canvas, depending what is available in the browser.
 
 - The data for the tile numbers is retrieved with an Ajax call utilising the Dojo JSONP cross-site technique from a node.js application
-  hosted on duostack. The code starts to asynchronously fetch the data early in game initialisation and a Dojo deferred reference
-  is kept. The board and grid are drawn and then if the deferred not ready another function is added to the callback chain so
+  hosted on [Duostack](https://www.duostack.com/). The code starts to asynchronously fetch the data early in game initialisation and a Dojo deferred reference
+  is kept. The board and grid are drawn and then if the deferred response is not ready another function is added to the callback chain so
   that the tiles will be drawn when the server does return. If this all takes longer that 0.5 second then the data is generated
   locally.
 
-- Some of algorithms in the code are unit tested with the DOH Dojo unit testing framework.
+- Some of algorithms in the code are unit tested with the DOH Dojo unit testing framework. The function that drops a tile into its nearest
+  square is tested, as is the function that resizes the board when then size is changed.
 
-- Each tile has a call back function that keeps a reference to itself using a closure. (It's the closure bit that I think is cool.)
+- Each tile has a call back function attached to the onMouseDown event that keeps a reference to its Dojo movable object so that it
+  knows the original co-ordinates of the tile in case it needs to be send back. The reference is kept by providing the call back function 
+  from within a closure. A tile needs to be sent back to it's original square if the player attempts to drop it in a square that is 
+  occupied or the edges don't match on the left hand board. The event object that the call back already had, has the co-ordinates of
+  the mouse at the time of the event, so an alternative way to do this would be to use the function that finds the nearest square to
+  a set of coordinates to return the tile.
 
 
 TODO:

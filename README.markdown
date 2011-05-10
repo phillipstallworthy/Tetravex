@@ -28,12 +28,11 @@ Cool Design Features
 - Some of algorithms in the code are unit tested with the DOH Dojo unit testing framework. The function that drops a tile into its nearest
   square is tested, as is the function that resizes the board when then size is changed.
 
-- Each tile has a call back function attached to the onMouseDown event that keeps a reference to its Dojo movable object so that it
-  knows the original co-ordinates of the tile in case it needs to be send back. The reference is kept by providing the call back function 
-  from within a closure. A tile needs to be sent back to it's original square if the player attempts to drop it in a square that is 
-  occupied or the edges don't match on the left hand board. The event object that the call back already had, has the co-ordinates of
-  the mouse at the time of the event, so an alternative way to do this would be to use the function that finds the nearest square to
-  a set of coordinates to return the tile.
+- Each tile has a callback function attached to the onMouseDown event that keeps a reference to its Dojo movable object so that it
+  knows the original coordinates of the tile in case it needs to be send back. The reference is kept by providing the call back function 
+  from within a closure. This causes the callback to keep a reference to data only available when the callback is registered, normally 
+  when called it only gets an event object. An alternative way to do this would be to use mouse coordinates in the event object and 
+  the function that finds the nearest square.
 
 
 TODO:

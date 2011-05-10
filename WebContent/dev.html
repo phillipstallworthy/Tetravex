@@ -6,12 +6,15 @@
 <link rel="stylesheet" type="text/css"
 	href="games/themes/green_baize/tetravex.css" />
 <script type="text/javascript" src="dojo-release-1.6.0-src/dojo/dojo.js"
-	djConfig="cacheBust:(new Date()).getTime(),modulePaths:{'games.Tetravex':'../../games/Tetravex'}">
-  
+	djConfig="cacheBust:(new Date()).getTime(),modulePaths:{'games':'../../games'}">
 </script>
+
+<!-- //djConfig="cacheBust:(new Date()).getTime(),modulePaths:{'games.Tetravex':'../../games/Tetravex'}"> -->
 
 <script type="text/javascript">
   dojo.require("games.Tetravex");
+  // games.Tetravex._dataUrl = "http://tiledata.duostack.net";
+  games.Tetravex._dataUrl = "http://localhost:8124";
   dojo.addOnLoad(function() {
     games.Tetravex.initialize(true);
     dojo.connect(
@@ -36,8 +39,7 @@
 		<span id="buttons">
 			<button type="button" id="buttonReset">Reset</button>
 			<button type="button" id="buttonMinus">-</button>
-			<button type="button" id="buttonPlus">+</button> </span> <span
-			id="gameTime">00:00:00</span>
+			<button type="button" id="buttonPlus">+</button> </span> <span id="gameTime">00:00:00</span>
 	</div>
 	<div id="tetravex"></div>
 </body>

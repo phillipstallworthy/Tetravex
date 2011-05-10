@@ -4,13 +4,14 @@
 <title>Tetravex Test Suite</title>
 <script type="text/javascript"
 	src="../dojo-release-1.6.0-src/dojo/dojo.js"
-	djConfig="cacheBust:(new Date()).getTime(),modulePaths:{'games.Tetravex':'../../games/Tetravex'}">
+	djConfig="cacheBust:(new Date()).getTime(),modulePaths:{'games':'../../games'}">
   
 </script>
 
 <script type="text/javascript">
   dojo.require("doh.runner");
   dojo.require("games.Tetravex");
+  games.Tetravex._dataUrl = "http://tiledata.duostack.net";
   dojo
       .addOnLoad(function() {
         doh

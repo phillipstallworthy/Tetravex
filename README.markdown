@@ -20,19 +20,19 @@ Cool Design Features
   using SVG, VML, Silverlight or Canvas, depending what is available in the browser.
 
 - The data for the tile numbers is retrieved with an Ajax call utilising the Dojo JSONP cross-site technique from a node.js application
-  hosted on [Duostack](https://www.duostack.com/). The code starts to asynchronously fetch the data early in game initialisation and a Dojo deferred reference
-  is kept. The board and grid are drawn and then if the deferred response is not ready another function is added to the callback chain so
+  hosted on [Joyent](http://phillipstallworthy.no.de/?size=10&tileDataCallback=callback). The code starts to asynchronously fetch the data early in game initialisation and a Dojo deferred reference
+  is kept. The board and grid are drawn and then if the deferred response is not ready another function is added to the call back chain so
   that the tiles will be drawn when the server does return. If this all takes longer that 0.5 second then the data is generated
   locally.
 
 - Some of algorithms in the code are unit tested with the DOH Dojo unit testing framework. The function that drops a tile into its nearest
   square is tested, as is the function that resizes the board when then size is changed.
 
-- Each tile has a callback function attached to the onMouseDown event that keeps a reference to its Dojo movable object so that it
-  knows the original coordinates of the tile in case it needs to be send back. The reference is kept by providing the call back function 
-  from within a closure. This causes the callback to keep a reference to data only available when the callback is registered, normally 
-  when called it only gets an event object. An alternative way to do this would be to use mouse coordinates in the event object and 
-  the function that finds the nearest square.
+- Each tile has a call back function attached to the onMouseDown event that keeps a reference to its Dojo movable object so that it
+  knows the original coordinates of the tile in case it needs to be send back. The reference is kept by providing the call back 
+  from within a closure. This causes it to keep a reference to data only available when the call back is registered, normally 
+  when call backs are called they only get the event object. An alternative way to do this would be to use the mouse coordinates
+  in the event object and the function that finds the nearest square.
 
 
 TODO:
@@ -49,11 +49,9 @@ The game is not yet playable, it's a work in progress.
 
 - Add logic to prevent a tile being dropped in an occupied square.
 
-- Llogic to prevent a tile being dropped in a right side square when the edges to adjacent tiles do not match
+- Logic to prevent a tile being dropped in a right side square when the edges to adjacent tiles do not match, IE game play logic.
 
-- Logic to recognise when the game is finished, and stop the clock
-
-- Dojo timer 
+- Logic to recognise when the game is finished, and stop the clock, Dojo timer maybe. 
 
 - Dojo slider to change the board size.
 
@@ -64,3 +62,15 @@ The game is not yet playable, it's a work in progress.
 - I have an idea that the server could supply a checksum with the tile data so that only server supplied
   data would be valid for a global high score table. Locally created data could be read when in the 
   ordered state making cheating fairly easy. Game result + checksum would be checked on the server. Needs login name and db.
+  
+HOWTO:
+-----
+
+- Play/hack locally.
+Check out all the code, edit dev.html and change dataUrl to either a local node instance, or use the Joyent one.
+Then just open dev.html in a browser
+
+- Make a Github home page release.
+GitHub offer a web page [hosting service](http://pages.github.com/) that I use for hosting Tetravex just now.
+To build the Javascript artifacts run build script in the build directory and then check in the updated files in the
+phillipstallworthy.github.com project. Manually check that any changes to dev.html are reflected in index.html

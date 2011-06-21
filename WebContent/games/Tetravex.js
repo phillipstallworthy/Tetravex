@@ -50,9 +50,9 @@ games.Tetravex.initialize = function(createBoard) {
   var deferred = games.Tetravex._xhrGameData();
 
   // temp module testing
-  console.log("games.tileData.top " + games.tileData.top);
-  console.log("games.tileData.bottom " + games.tileData.bottom);
-  console.log("games.tileData.logSize(size) " + games.tileData.logSize(games.Tetravex._boardSize));
+  // console.debug("games.tileData.top " + games.tileData.top);
+  // console.debug("games.tileData.bottom " + games.tileData.bottom);
+  // console.debug("games.tileData.logSize(size) " + games.tileData.logSize(games.Tetravex._boardSize));
 
   var container = dojo.byId("tetravex");
 
@@ -73,25 +73,25 @@ games.Tetravex.initialize = function(createBoard) {
     // If we are still waiting for a return then add deferred call backs to the chain that will fire when it does.
     // Calls to createTiles cannot be put into the original call back functions as there is a chance
     // they will fire before the surface is loaded, which would be bad.
-    console.debug("XHR fired " + deferred.fired);
+    //console.debug("XHR fired " + deferred.fired);
     if (deferred.fired == 0 || deferred.fired == 1) {
-      console.debug("XHR was finished");
+      //console.debug("XHR was finished");
       games.Tetravex._createTiles();
     } else {
       deferred.addCallback(function(response) {
-        console.debug("XHR not finished, this additional callback fires when it does.");
+        //console.debug("XHR not finished, this additional callback fires when it does.");
         games.Tetravex._createTiles();
         return response;
       });
       deferred.addErrback(function(response) {
-        console.debug("XHR not finished, this additional errback fires when it does.");
+        //console.debug("XHR not finished, this additional errback fires when it does.");
         games.Tetravex._createTiles();
         return response;
       });
     }
     // If the local time out is long then maybe a call back has not even been fired yet.
     // Very cool IMHO, because they will get called, and still work.
-    console.debug("Returning from initialize function. ");
+    //console.debug("Returning from initialize function. ");
   });
   return;
 };
@@ -126,18 +126,17 @@ games.Tetravex._xhrGameData = function() {
     callbackParamName : "tileDataCallback", // Read by the jsonp service to set the name of the function returned, set
                                             // by Dojo. IE Dojo sets the name of the call back and the client and the server
                                             // use this parameter to pass the value.
-    url : games.Tetravex._dataUrl,
-    handleAs : "json", // Strip the comments and eval to a JavaScript object
-    timeout : games.Tetravex._timeout, // Call the error handler if nothing after .5 seconds
+    url : games.Tetravex.dataUrl,
+    handleAs : "json",                      // Strip the comments and eval to a JavaScript object
+    timeout : games.Tetravex._timeout,      // Call the error handler if nothing after .5 seconds
     preventCache : true,
     content : {
       format : "json",
       size : games.Tetravex._boardSize
-    }, // content is the query string
-    // Run this function if the request is successful
+    },  // content is the query string
+       // Run this function if the request is successful
     load : function(response, ioArgs) {
-      console.debug(
-          "successful xhrGet", response, ioArgs);
+      //console.debug("successful xhrGet", response, ioArgs);
       games.Tetravex._tileData = response.n;
       return response; // always return the response back
     },
@@ -293,6 +292,8 @@ games.Tetravex._createTiles = function() {
         moveMe[t], "onMouseDown", null, (function(moveMe) {
           // a call back closure that remembers each moveMe that it's given, sweet!
           return function(evt) {
+            debugger;
+            console.debug("evt " + evt);
             games.Tetravex._origin.x = moveMe.shape.matrix.dx;
             games.Tetravex._origin.y = moveMe.shape.matrix.dy;
           };

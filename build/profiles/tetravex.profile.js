@@ -6,7 +6,8 @@ dependencies = {
       // in addition to the standard dojo.js base APIs.
       name: "tetravex.js",
       dependencies: [
-        "games.Tetravex"
+        "games.Tetravex",
+        "game.tileData"
       ]
     }
   ],

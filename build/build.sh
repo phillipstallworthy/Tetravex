@@ -1,5 +1,5 @@
 
-# Run this script from this directory for now.
+# Run this script from this build directory for now.
 cd ../WebContent/dojo-release-1.6.0-src/util/buildscripts
 ./build.sh profileFile=../../../../build/profiles/tetravex.profile.js action=clean,release releaseDir=../../../release optimize=shrinksafe
 

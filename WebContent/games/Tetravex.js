@@ -27,11 +27,15 @@ games.Tetravex.squares = [];
 // the array that stores the tiles.
 games.Tetravex._tile = [];
 games.Tetravex._tileData = []; // xhr retrieved
+games.Tetravex._tileHandles = [];
+games.Tetravex._tileStopHandles = [];
+games.Tetravex._tileStartHandles = [];
 games.Tetravex._origin = {
   x : 0,
   y : 0
 };
-games.Tetravex._timeout = 500; // the timeout for fetching game data from the server
+games.Tetravex._timeout = 1000; // the timeout for fetching game data from the server
+var deferred = null;
 
 // Set the padding and then reset the board grid arrays.
 games.Tetravex.setPadding = function(padding) {
@@ -47,7 +51,12 @@ games.Tetravex.setTileSize = function(size) {
 // Initialise the game.
 games.Tetravex.initialize = function(createBoard) {
   // first asynchronously get the data, then do some setup while waiting for the return.
-  var deferred = games.Tetravex._xhrGameData();
+
+  if (deferred instanceof dojo.Deferred) {
+    deferred.cancel();
+    // console.log("cancelling the deferred");
+  }
+  deferred = games.Tetravex._xhrGameData();
 
   // temp module testing
   // console.debug("games.tileData.top " + games.tileData.top);
@@ -57,9 +66,25 @@ games.Tetravex.initialize = function(createBoard) {
   var container = dojo.byId("tetravex");
 
   if (createBoard) {
+    console.log("create suface");
     games.Tetravex._surface = dojox.gfx.createSurface(
         container, games.Tetravex._props.suface_width, games.Tetravex._props.suface_height);
   } else {
+    console.log("clear surface");
+
+    // disconnect the tiles from their mouse down, stop and start events
+    for ( var i = 0; i < games.Tetravex._tileHandles.length; i++) {
+      dojo.disconnect(games.Tetravex._tileHandles[i]);
+    }
+
+    for ( var i = 0; i < games.Tetravex._tileStopHandles.length; i++) {
+      dojo.unsubscribe(games.Tetravex._tileStopHandles[i]);
+    }
+
+    for ( var i = 0; i < games.Tetravex._tileStartHandles.length; i++) {
+      dojo.unsubscribe(games.Tetravex._tileStartHandles[i]);
+    }
+
     games.Tetravex._surface.clear();
   }
   games.Tetravex._surface.whenLoaded(function() {
@@ -73,25 +98,26 @@ games.Tetravex.initialize = function(createBoard) {
     // If we are still waiting for a return then add deferred call backs to the chain that will fire when it does.
     // Calls to createTiles cannot be put into the original call back functions as there is a chance
     // they will fire before the surface is loaded, which would be bad.
-    //console.debug("XHR fired " + deferred.fired);
+    // console.debug("XHR fired " + deferred.fired);
     if (deferred.fired == 0 || deferred.fired == 1) {
-      //console.debug("XHR was finished");
+      // console.debug("XHR was finished");
       games.Tetravex._createTiles();
     } else {
       deferred.addCallback(function(response) {
-        //console.debug("XHR not finished, this additional callback fires when it does.");
+        // console.debug("XHR not finished, this additional callback fires when it does.");
         games.Tetravex._createTiles();
         return response;
       });
       deferred.addErrback(function(response) {
-        //console.debug("XHR not finished, this additional errback fires when it does.");
+        // console.debug("XHR not finished, this additional errback fires when it does.");
         games.Tetravex._createTiles();
         return response;
       });
     }
-    // If the local time out is long then maybe a call back has not even been fired yet.
-    // Very cool IMHO, because they will get called, and still work.
-    //console.debug("Returning from initialize function. ");
+    // The callbacks added above fire when the deffered returns
+    // but are only added if we get to this point without a return.
+    // Very cool IMHO.
+    // console.debug("Returning from initialize function. ");
   });
   return;
 };
@@ -124,19 +150,19 @@ games.Tetravex.resetMinus = function() {
 games.Tetravex._xhrGameData = function() {
   return dojo.io.script.get({
     callbackParamName : "tileDataCallback", // Read by the jsonp service to set the name of the function returned, set
-                                            // by Dojo. IE Dojo sets the name of the call back and the client and the server
-                                            // use this parameter to pass the value.
+    // by Dojo. IE Dojo sets the name of the call back and the client and the server
+    // use this parameter to pass the value.
     url : games.Tetravex.dataUrl,
-    handleAs : "json",                      // Strip the comments and eval to a JavaScript object
-    timeout : games.Tetravex._timeout,      // Call the error handler if nothing after .5 seconds
+    handleAs : "json", // Strip the comments and eval to a JavaScript object
+    timeout : games.Tetravex._timeout, // Call the error handler if nothing after .5 seconds
     preventCache : true,
     content : {
       format : "json",
       size : games.Tetravex._boardSize
-    },  // content is the query string
-       // Run this function if the request is successful
+    }, // content is the query string
+    // Run this function if the request is successful
     load : function(response, ioArgs) {
-      //console.debug("successful xhrGet", response, ioArgs);
+      // console.debug("successful xhrGet", response, ioArgs);
       games.Tetravex._tileData = response.n;
       return response; // always return the response back
     },
@@ -247,28 +273,18 @@ games.Tetravex._extendOnMoving = function() {
 
 games.Tetravex._createTiles = function() {
   // create and place the tiles
-  var t = 0;
+  var tile = 0;
   for ( var y = 0; y < games.Tetravex._boardSize; y++) {
     for ( var x = 1; x <= games.Tetravex._boardSize; x++) {
+      games.Tetravex._tile[tile] = createTile(
+          games.Tetravex._tileData[tile][0], games.Tetravex._tileData[tile][1], games.Tetravex._tileData[tile][2],
+          games.Tetravex._tileData[tile][3]);
 
-      // random tiles, not playable
-      // games.Tetravex._tile[t] = createTile(Math.ceil(Math.random() * 9), Math.ceil(Math.random() * 9),
-      // Math.ceil(Math.random() * 9), Math.ceil(Math.random() * 9));
-
-      // console.debug("tile data " + games.Tetravex._tileData);
-      // console.debug("tile data " + games.Tetravex._tileData[t][0] + " " + games.Tetravex._tileData[t][1] + " "
-      // + games.Tetravex._tileData[t][2] + " " + games.Tetravex._tileData[t][3]);
-
-      // use the tile data to populate the tiles
-      games.Tetravex._tile[t] = createTile(
-          games.Tetravex._tileData[t][0], games.Tetravex._tileData[t][1], games.Tetravex._tileData[t][2],
-          games.Tetravex._tileData[t][3]);
-
-      games.Tetravex._tile[t].applyLeftTransform({
+      games.Tetravex._tile[tile].applyLeftTransform({
         dx : games.Tetravex._boardX[games.Tetravex._boardSize + x] + (games.Tetravex._props.padding),
         dy : games.Tetravex._boardY[y] + (games.Tetravex._props.padding)
       });
-      t++;
+      tile++;
     }
   }
 
@@ -279,23 +295,24 @@ games.Tetravex._createTiles = function() {
     var moveMe = [];
     moveMe[t] = new dojox.gfx.Moveable(
         games.Tetravex._tile[t]);
-    dojo.subscribe(
+    games.Tetravex._tileStopHandles[t] = dojo.subscribe(
         "/gfx/move/stop", this, function(mover) {
           moveToNearestSquare(mover);
         });
-    dojo.subscribe(
+    games.Tetravex._tileStartHandles[t] = dojo.subscribe(
         "/gfx/move/start", this, function(mover) {
           ;
           mover.shape.moveToFront();
         });
-    dojo.connect(
+    games.Tetravex._tileHandles[t] = dojo.connect(
         moveMe[t], "onMouseDown", null, (function(moveMe) {
           // a call back closure that remembers each moveMe that it's given, sweet!
           return function(evt) {
-            debugger;
+            // debugger;
             console.debug("evt " + evt);
             games.Tetravex._origin.x = moveMe.shape.matrix.dx;
             games.Tetravex._origin.y = moveMe.shape.matrix.dy;
+            console.log ("origin x:y " + games.Tetravex._origin.x + " : " + games.Tetravex._origin.y);
           };
         })(moveMe[t]));
   }
@@ -389,21 +406,38 @@ games.Tetravex._createTiles = function() {
 
 var moveToNearestSquare = function(mover) {
 
-  // console.clear();
-  // console.debug("tile X is " + mover.shape.matrix.dx + " Y is " + mover.shape.matrix.dy);
+  //console.clear();
+  console.debug("tile X is " + mover.shape.matrix.dx + " Y is " + mover.shape.matrix.dy);
 
   var deltaX = games.Tetravex._findNearestX(mover.shape.matrix.dx) - mover.shape.matrix.dx
       + (games.Tetravex._props.padding);
   var deltaY = games.Tetravex._findNearestY(mover.shape.matrix.dy) - mover.shape.matrix.dy
       + (games.Tetravex._props.padding);
+  
+  // not perfect
+  if (deltaX == 0 && deltaY == 0){
+    return;
+  }
 
-  // TODO:
-  // each square needs a tile property, a reference to a tile
-  // and an above, below, left and right tile so that the numbers can be checked.
+  // TODO: Check the numbers of the adjacent squares
+  
+  // TODO: This method gets called too many times.
+  // When there is a stop event this gets called for every square
+  // Only needs to be the one moving.
 
-  // always return home, needs to be wrapped in a test.
-  // deltaX = games.Tetravex._origin.x - mover.shape.matrix.dx + (games.Tetravex._props.padding);
-  // deltaY = games.Tetravex._origin.y - mover.shape.matrix.dy + (games.Tetravex._props.padding);
+  // Check that the proposed co-ords are not already in use by another tile.
+  console.log("deltaX " + deltaX);
+  for ( var g = 0; g < games.Tetravex._tile.length; g++) {
+    console.log("Tile " + g + " x = " + games.Tetravex._tile[g].matrix.dx);
+    if (deltaX + mover.shape.matrix.dx == games.Tetravex._tile[g].matrix.dx 
+        && deltaY + mover.shape.matrix.dy == games.Tetravex._tile[g].matrix.dx) {
+      
+      console.log ("origin x:y " + games.Tetravex._origin.x + " : " + games.Tetravex._origin.y);
+      //return to origin - another reason to only call for mover.
+      deltaX = games.Tetravex._origin.x - mover.shape.matrix.dx + (games.Tetravex._props.padding);
+      deltaY = games.Tetravex._origin.y - mover.shape.matrix.dy + (games.Tetravex._props.padding);
+    }
+  }
 
   mover.shape.applyLeftTransform({
     dx : deltaX,

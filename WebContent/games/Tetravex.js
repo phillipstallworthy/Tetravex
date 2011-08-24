@@ -16,6 +16,7 @@ games.Tetravex._props = {
   suface_height : 200,
   padding : 0
 };
+games.Tetravex.easy = false;
 // _underscored as should be set by function
 games.Tetravex._boardX = [];
 games.Tetravex._boardY = [];
@@ -23,7 +24,6 @@ games.Tetravex._half_square = 0; // half a square including padding
 games.Tetravex._tileSize = 0;
 games.Tetravex._boardSize = 2;
 games.Tetravex._surface = null;
-// TODO: A sparse array of square objects that store references to the tiles.??
 games.Tetravex.squares = [];
 // the array that stores the tiles.
 games.Tetravex._tile = [];
@@ -303,6 +303,12 @@ games.Tetravex._createTiles = function() {
             games.Tetravex._origin.x = moveMe.shape.matrix.dx;
             games.Tetravex._origin.y = moveMe.shape.matrix.dy;
             console.clear();
+            // reset all tile above below right and left
+            console.debug("reset for tile " + moveMe.shape.tileNumber);
+            games.Tetravex._tile[moveMe.shape.tileNumber].tileAbove = null;
+            games.Tetravex._tile[moveMe.shape.tileNumber].tileLeft = null;
+            games.Tetravex._tile[moveMe.shape.tileNumber].tileBelow = null;
+            games.Tetravex._tile[moveMe.shape.tileNumber].tileRight = null;
             console.debug("origin x:y " + games.Tetravex._origin.x + " : " + games.Tetravex._origin.y);
           };
         })(moveMe[t]));
@@ -312,6 +318,8 @@ games.Tetravex._createTiles = function() {
           return function(evt) {
             console.debug("StopCalled ");
             games.Tetravex.moveToNearestSquare(moveMe);
+            games.Tetravex._checkNeighbours(moveMe);
+            games.Tetravex.checkForWin();
           };
         })(moveMe[t]));
   }
@@ -409,13 +417,15 @@ games.Tetravex._createTiles = function() {
   }
 };
 
-games.Tetravex.getTileByNumber = function(tileNumber){
+// are you used?
+games.Tetravex.getTileByNumber = function(tileNumber) {
   for ( var g = 0; g < games.Tetravex._tile.length; g++) {
-    if (games.Tetravex._tile[g].tileNumber == tileNumber){
+    if (games.Tetravex._tile[g].tileNumber == tileNumber) {
       return games.Tetravex._tile[g];
     }
-  };
-}
+  }
+  ;
+};
 
 games.Tetravex.moveToNearestSquare = function(mover) {
 
@@ -440,74 +450,15 @@ games.Tetravex.moveToNearestSquare = function(mover) {
     deltaY = games.Tetravex._origin.y - mover.shape.matrix.dy + (games.Tetravex._props.padding);
   }
 
-  // TODO: Check the numbers of the adjacent squares
-  // Check that the proposed co-ords are not already in use by another tile.
   for ( var g = 0; g < games.Tetravex._tile.length; g++) {
+
+    // Check that the proposed co-ords are not already in use by another tile.
     console.debug("Check tile " + g + " x:y  " + games.Tetravex._tile[g].matrix.dx + " : "
         + games.Tetravex._tile[g].matrix.dx);
     // check proposed square is not occupied
     if (nearestX == games.Tetravex._tile[g].matrix.dx && nearestY == games.Tetravex._tile[g].matrix.dy) {
       returnToOrigin();
     }
-
-    // This could be a easy setting I guess, don't allow drops when there is no match.
-    // Check drop side of board only
-    if (nearestX < games.Tetravex._props.suface_width / 2) {
-      // Check for tile above
-      console.debug("Checking y for tile present " + games.Tetravex._findNearestY(nearestY - games.Tetravex._tileSize));
-      if (games.Tetravex._tile[g].matrix.dy == games.Tetravex._findNearestY(nearestY - games.Tetravex._tileSize)
-          && games.Tetravex._tile[g].matrix.dx == nearestX) {
-        console.debug("******* tile above! **********");
-        if (games.Tetravex._tile[g].bottomNum != mover.shape.topNum) {
-          // if easy
-          returnToOrigin();
-        } else {
-          mover.tileAbove = games.Tetravex._tile[g].tileNumber;
-        }
-      }
-
-      // check for tile below
-      console.debug("Checking y for tile present " + games.Tetravex._findNearestY(nearestY + games.Tetravex._tileSize));
-      if (games.Tetravex._tile[g].matrix.dy == games.Tetravex._findNearestY(nearestY + games.Tetravex._tileSize)
-          && games.Tetravex._tile[g].matrix.dx == nearestX) {
-        console.debug("******* tile below! **********");
-        if (games.Tetravex._tile[g].topNum != mover.shape.bottomNum) {
-       // if easy
-          returnToOrigin();
-        } else {
-          mover.tileBelow = games.Tetravex._tile[g].tileNumber;
-        }
-      }
-
-      // Check for tile to the left
-      console.debug("Checking y for tile present " + games.Tetravex._findNearestX(nearestX - games.Tetravex._tileSize));
-      if (games.Tetravex._tile[g].matrix.dx == games.Tetravex._findNearestX(nearestX - games.Tetravex._tileSize)
-          && games.Tetravex._tile[g].matrix.dy == nearestY) {
-        console.debug("******* tile to the left! **********");
-        if (games.Tetravex._tile[g].rightNum != mover.shape.leftNum) {
-          // if easy
-          returnToOrigin();
-        } else {
-          mover.tileLeft = games.Tetravex._tile[g].tileNumber;
-        }
-      }
-
-      // Check for tile to the right
-      console.debug("Checking y for tile present " + games.Tetravex._findNearestX(nearestX + games.Tetravex._tileSize));
-      if (games.Tetravex._tile[g].matrix.dx == games.Tetravex._findNearestX(nearestX + games.Tetravex._tileSize)
-          && games.Tetravex._tile[g].matrix.dy == nearestY) {
-        console.debug("******* tile to the right! **********");
-        if (games.Tetravex._tile[g].leftNum != mover.shape.rightNum) {
-          // if easy
-          returnToOrigin();
-        } else {
-          mover.tileRight = games.Tetravex._tile[g].tileNumber;
-        }
-      }
-      // end easy game section
-
-    }
-
   }
 
   mover.shape.applyLeftTransform({
@@ -518,7 +469,9 @@ games.Tetravex.moveToNearestSquare = function(mover) {
 
 games.Tetravex.checkForWin = function(mover) {
 
-  // One - quick check that all the tiles are on the left
+  console.debug("check for win");
+
+  // Quick check that all the tiles are on the left
   for ( var g = 0; g < games.Tetravex._tile.length; g++) {
     if (games.Tetravex._tile[g].matrix.dx > games.Tetravex._props.suface_width / 2) {
       console.debug("Not Yet!");
@@ -526,54 +479,139 @@ games.Tetravex.checkForWin = function(mover) {
     }
   }
 
+  // If all the tiles are on the left then the left right up and down tile should be populated correctly
   for ( var g = 0; g < games.Tetravex._tile.length; g++) {
-    console.debug("Check tile " + g + " x:y  " + games.Tetravex._tile[g].matrix.dx + " : "
-        + games.Tetravex._tile[g].matrix.dx);
 
-    // Check the tile above is correct
-    console.debug("Checking y for tile present " + games.Tetravex._findNearestY(nearestY - games.Tetravex._tileSize));
+    console.debug("&&&&& Check Tile " + g);
 
-    
-    // TODO: Iterate the tiles in thier random order, get their tileNums and add to an arry with tileNums in order
-    // Then iterate the tiles in tileNum order so that the leftTile, rightTile can be easily access for 
-    // number checking.
-    
-    // check topnum = tileabove bottom num
+    // check topnum = tileAbove bottom num
+    if (games.Tetravex._tile[g].tileAbove != null) {
+      console.debug(" Tile Above " + games.Tetravex._tile[g].tileAbove);
+      console.debug(" Tile " + g + " topNum " + games.Tetravex._tile[g].topNum);
+      console.debug(" Tile above bottom num " + games.Tetravex._tile[games.Tetravex._tile[g].tileAbove].bottomNum);
+
+      if (games.Tetravex._tile[g].topNum != games.Tetravex._tile[games.Tetravex._tile[g].tileAbove].bottomNum) {
+        console.debug("The tile above tile " + g + " does not match");
+        return;  // comment this return for debugging all sections of this method
+      }
+    }
 
     // check rightnum = tile to the right leftnum
+    if (games.Tetravex._tile[g].tileRight != null) {
+
+      console.debug(" Tile to Right " + games.Tetravex._tile[g].tileRight);
+      console.debug(" Tile " + g + " rightNum " + games.Tetravex._tile[g].rightNum);
+      console.debug(" Right Tile left num " + games.Tetravex._tile[games.Tetravex._tile[g].tileRight].leftNum);
+
+      if (games.Tetravex._tile[g].rightNum != games.Tetravex._tile[games.Tetravex._tile[g].tileRight].leftNum) {
+        console.debug("The tile to the right of tile " + g + " does not match");
+        return;  // comment this return for debugging all sections of this method
+      }
+    }
 
     // check bottomNum = tile below topNum
+    if (games.Tetravex._tile[g].tileBelow != null) {
+
+      console.debug(" Tile to Below " + games.Tetravex._tile[g].tileBelow);
+      console.debug(" Tile " + g + " bottomNum " + games.Tetravex._tile[g].bottomNum);
+      console.debug(" Below tile top num " + games.Tetravex._tile[games.Tetravex._tile[g].tileBelow].topNum);
+
+      if (games.Tetravex._tile[g].bottomNum != games.Tetravex._tile[games.Tetravex._tile[g].tileBelow].topNum) {
+        console.debug("The tile below tile " + g + " does not match");
+        return;  // comment this return for debugging all sections of this method
+      }
+    }
 
     // check leftNum = tile to the left RightNum
-    
-    //Following sections left for reference.
-    // check for tile below
-    console.debug("Checking y for tile present " + games.Tetravex._findNearestY(nearestY + games.Tetravex._tileSize));
-    if (games.Tetravex._tile[g].matrix.dy == games.Tetravex._findNearestY(nearestY + games.Tetravex._tileSize)
-        && games.Tetravex._tile[g].matrix.dx == nearestX) {
-      console.debug("******* tile below! **********");
-      if (games.Tetravex._tile[g].topNum != mover.shape.bottomNum) {
-        returnToOrigin();
+    if (games.Tetravex._tile[g].tileLeft != null) {
+
+      console.debug(" Tile to Left " + games.Tetravex._tile[g].tileLeft);
+      console.debug(" Tile " + g + " leftNum " + games.Tetravex._tile[g].leftNum);
+      console.debug(" Left tile right num " + games.Tetravex._tile[games.Tetravex._tile[g].tileLeft].rightNum);
+
+      if (games.Tetravex._tile[g].leftNum != games.Tetravex._tile[games.Tetravex._tile[g].tileLeft].rightNum) {
+        console.debug("The tile to the left of tile " + g + " does not match");
+        return;  // comment this return for debugging all sections of this method
       }
     }
+  }
+  console.debug("%%%%%%%%%%%%% Winner Winner Chicken Dinner %%%%%%%%%%%%%%%%%");
+};
 
-    // Check for tile to the left
-    console.debug("Checking y for tile present " + games.Tetravex._findNearestX(nearestX - games.Tetravex._tileSize));
-    if (games.Tetravex._tile[g].matrix.dx == games.Tetravex._findNearestX(nearestX - games.Tetravex._tileSize)
-        && games.Tetravex._tile[g].matrix.dy == nearestY) {
-      console.debug("******* tile to the left! **********");
-      if (games.Tetravex._tile[g].rightNum != mover.shape.leftNum) {
-        returnToOrigin();
+games.Tetravex._checkNeighbours = function(mover) {
+
+  console.log("Check neighbour of mover " + mover.shape.tileNumber + " co-ords x:y " + mover.shape.matrix.dx + " : "
+      + mover.shape.matrix.dy);
+
+  for ( var g = 0; g < games.Tetravex._tile.length; g++) {
+
+    // if mover is on the left
+    if (mover.shape.matrix.dx < games.Tetravex._props.suface_width / 2) {
+
+      // Check for tile above// fails for the top tile, finds nearest which is same
+      console.debug("Checking y for tile present "
+          + games.Tetravex._findNearestY(mover.shape.matrix.dy - games.Tetravex._tileSize));
+
+      var nearestY = games.Tetravex._findNearestY(mover.shape.matrix.dy - games.Tetravex._tileSize);
+      if (games.Tetravex._tile[g].matrix.dy == nearestY && nearestY != mover.shape.matrix.dy
+          && games.Tetravex._tile[g].matrix.dx == mover.shape.matrix.dx) {
+        console.debug("******* tile above! **********");
+
+        games.Tetravex._tile[mover.shape.tileNumber].tileAbove = g;
+        if (games.Tetravex._tile[g].bottomNum != mover.shape.topNum) {
+          if (games.Tetravex.easy) {
+            // returnToOrigin(); //TODO: can I make this work here??
+          }
+        }
       }
-    }
 
-    // Check for tile to the right
-    console.debug("Checking y for tile present " + games.Tetravex._findNearestX(nearestX + games.Tetravex._tileSize));
-    if (games.Tetravex._tile[g].matrix.dx == games.Tetravex._findNearestX(nearestX + games.Tetravex._tileSize)
-        && games.Tetravex._tile[g].matrix.dy == nearestY) {
-      console.debug("******* tile to the right! **********");
-      if (games.Tetravex._tile[g].leftNum != mover.shape.rightNum) {
-        returnToOrigin();
+      // check for tile below
+      console.debug("Checking y for tile present "
+          + games.Tetravex._findNearestY(mover.shape.matrix.dy + games.Tetravex._tileSize));
+      var nearestY = games.Tetravex._findNearestY(mover.shape.matrix.dy + games.Tetravex._tileSize);
+      if (games.Tetravex._tile[g].matrix.dy == nearestY && nearestY != mover.shape.matrix.dy
+          && games.Tetravex._tile[g].matrix.dx == mover.shape.matrix.dx) {
+        console.debug("******* tile below! **********");
+        games.Tetravex._tile[mover.shape.tileNumber].tileBelow = g;
+        if (games.Tetravex._tile[g].topNum != mover.shape.bottomNum) {
+          if (games.Tetravex.easy) {
+            // returnToOrigin();
+          }
+        }
+      }
+
+      // Check for tile to the left
+      console.debug("Checking x for tile present "
+          + games.Tetravex._findNearestX(mover.shape.matrix.dx - games.Tetravex._tileSize));
+      var nearestX = games.Tetravex._findNearestX(mover.shape.matrix.dx
+          - games.Tetravex._tileSize);
+      if (games.Tetravex._tile[g].matrix.dx == nearestX && nearestX != mover.shape.matrix.dx
+          && games.Tetravex._tile[g].matrix.dy == mover.shape.matrix.dy) {
+        console.debug("******* tile to the left! ********** mover" + mover.shape.tileNumber + " tile "
+            + games.Tetravex._tile[g].tileNumber);
+        games.Tetravex._tile[mover.shape.tileNumber].tileLeft = g;
+        // mover.tileLeft = games.Tetravex._tile[g].tileNumber;
+        if (games.Tetravex._tile[g].rightNum != mover.shape.leftNum) {
+          if (games.Tetravex.easy) {
+            // returnToOrigin();
+          }
+        }
+      }
+
+      // Check for tile to the right
+      console.debug("Checking x for tile present "
+          + games.Tetravex._findNearestX(mover.shape.matrix.dx + games.Tetravex._tileSize));
+      var nearestX = games.Tetravex._findNearestX(mover.shape.matrix.dx
+          + games.Tetravex._tileSize);
+      if (games.Tetravex._tile[g].matrix.dx == nearestX && nearestX != mover.shape.matrix.dx
+          && games.Tetravex._tile[g].matrix.dy == mover.shape.matrix.dy) {
+        console.debug("******* tile to the right! **********");
+        games.Tetravex._tile[mover.shape.tileNumber].tileRight = g;
+        if (games.Tetravex._tile[g].leftNum != mover.shape.rightNum) {
+          if (games.Tetravex.easy) {
+            // returnToOrigin();
+          }
+        }
       }
     }
   }
